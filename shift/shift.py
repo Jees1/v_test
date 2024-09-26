@@ -3,8 +3,8 @@ import discord
 from discord.ext import commands
 from datetime import datetime, timezone
 
-
-
+from core import checks
+from core.models import DummyMessage, PermissionLevel
 
 ALLOWED_ROLES = [
     796317014209462332,
@@ -43,6 +43,7 @@ class ShiftManager(commands.Cog):
         print(f'Logged in as {self.bot.user}!')
 
     @commands.command(aliases=['s'])
+    @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def shift(self, ctx):
         self.shift_start_times[ctx.guild.id] = datetime.now(timezone.utc)
@@ -70,18 +71,21 @@ class ShiftManager(commands.Cog):
             await ctx.send("The specified channel could not be found.")
 
     @commands.command()
+    @checks.has_permissions(PermissionLevel.REGULAR)
     @is_admin_user()
     async def shiftmention(self, ctx, role: discord.Role):
         self.shift_mention_roles[ctx.guild.id] = role.id
         await ctx.send(f"Shift mention role set to {role.mention}.")
 
     @commands.command()
+    @checks.has_permissions(PermissionLevel.REGULAR)
     @is_admin_user()
     async def shiftchannel(self, ctx, channel: discord.TextChannel):
         self.shift_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"Shift messages will now be sent in {channel.mention}.")
 
-    @commands.command()
+    @commands.command(aliases=['es'])
+    @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def endshift(self, ctx, message_id: int):
         if ctx.guild.id not in self.shift_start_times:
