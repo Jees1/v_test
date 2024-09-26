@@ -136,6 +136,6 @@ class ShiftManager(commands.Cog):
     async def endshift_error(self, ctx, error):
         await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <MessageID>`.")
 
-bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
-bot.add_cog(ShiftManager(bot))
-
+#bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
+async def setup(bot):
+    await bot.add_cog(ShiftManager(bot))
