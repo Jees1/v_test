@@ -116,6 +116,7 @@ class ShiftManager(commands.Cog):
                     embed.title = "Shift Ended"
                     embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
                     embed.color = 0xED4245
+                    embed.set_footer(text=f"Ended by: {interaction.user.name}")
                     embed.clear_fields()
                     await msg.edit(embed=embed, view=None)
                     await interaction.response.send_message(f"{emoji} | Shift has ended.", ephemeral=True)
