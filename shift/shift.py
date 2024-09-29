@@ -123,7 +123,7 @@ class ShiftManager(commands.Cog):
                     await msg.edit(embed=embed)
 
                     # Edit the confirmation message
-                    await confirmation_msg.edit(content=f"{emoji} | EDIT: Successfully ended the shift!", view=None)
+                    await confirmation_msg.edit(content=f"{emoji} | Successfully ended the shift!", view=None)
 
                     await interaction.response.send_message("Shift has ended.", ephemeral=True)
 
