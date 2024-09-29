@@ -77,7 +77,7 @@ class TrainingManager(commands.Cog):
             self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))  # Store the selected time
             
             training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
-            role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
+            role_id = self.training_mention_roles.get(ctx.guild.id, 738396997135892540) # 695243187043696650
             session_ping = f"<@&{role_id}>"
             host_mention = ctx.author.mention
 
