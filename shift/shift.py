@@ -83,6 +83,30 @@ class ShiftManager(commands.Cog):
         if channel:
             msg = await channel.send(f"{session_ping}", embed=embed)
 
+            # Create a button to end the shift
+            button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.red)
+
+            async def button_callback(interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("You are not authorized to end this shift.", ephemeral=True)
+                    return
+
+                await self.end_shift(msg, host_mention)
+
+                # Notify the user and disable the button
+                await interaction.response.send_message(f"{emoji} | Successfully ended the shift!", ephemeral=True)
+
+                # Disable the button
+                button.disabled = True
+                view = discord.ui.View()
+                view.add_item(button)
+                await msg.edit(view=view)
+
+            button.callback = button_callback
+            view = discord.ui.View()
+            view.add_item(button)
+
+            await msg.edit(view=view)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
 
             await ctx.send(f"{emoji} | Shift has been started!")
