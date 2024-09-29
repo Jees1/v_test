@@ -57,7 +57,7 @@ class TrainingManager(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
-    
+        
     @commands.command(aliases=['train'])
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
@@ -72,7 +72,7 @@ class TrainingManager(commands.Cog):
         ]
     
         # Create a select menu for the time options
-        time_select = discord.ui.Select(placeholder="Select the training time...", options=time_options)
+        time_select = discord.ui.Select(placeholder="Select the training time...", options=[discord.SelectOption(label=time) for time in time_options])
     
         async def time_callback(interaction):
             selected_time = time_select.values[0]  # Ensure this is correct
@@ -101,18 +101,20 @@ class TrainingManager(commands.Cog):
                 view.add_item(time_select)
                 view.add_item(start_button)
     
-                # Send the message with the embed and view
-                msg = await channel.send(f"{session_ping}", embed=embed, view=view)
-                self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
-                
-                start_button.callback = lambda interaction: self.start_training_callback(interaction, msg.id)
-                await ctx.send(f"{emoji} | Training has been initialized! Please select a time.")
+                try:
+                    # Send the message with the embed and view
+                    msg = await channel.send(f"{session_ping}", embed=embed, view=view)
+                    self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
+                    start_button.callback = lambda interaction: self.start_training_callback(interaction, msg.id)
+                    await ctx.send(f"{emoji} | Training has been initialized! Please select a time.")
+                except Exception as e:
+                    await self.send_error_log(e, ctx, "Error sending training message")
             else:
                 await ctx.send("The specified channel could not be found.")
     
         time_select.callback = time_callback
         await ctx.send("Please select the training time:", view=discord.ui.View().add_item(time_select))
-    
+
 
     async def start_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
