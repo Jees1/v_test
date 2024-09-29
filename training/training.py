@@ -126,39 +126,35 @@ class TrainingManager(commands.Cog):
     
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
-        if not channel:
-            await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
-            return
     
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
-                if embed.title == "Training":
-                    embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
+                embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
+                await msg.edit(embed=embed)
     
-                    # Create a new view
-                    new_view = discord.ui.View()
-                    start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
-                    lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=False)
-                    end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=False)
+                # Create buttons
+                action_buttons = discord.ui.View()
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
     
-                    # Set callbacks
-                    lock_button.callback = self.lock_training_callback
-                    end_button.callback = self.end_training_callback
+                # Set callbacks
+                lock_button.callback = self.lock_training_callback
+                end_button.callback = lambda interaction: self.end_training_callback(interaction, msg.id)
     
-                    # Add buttons to the view
-                    new_view.add_item(start_button)
-                    new_view.add_item(lock_button)
-                    new_view.add_item(end_button)
+                # Add buttons
+                action_buttons.add_item(lock_button)
+                action_buttons.add_item(end_button)
     
-                    # Acknowledge the interaction first
-                    await interaction.response.send_message(f"{emoji} | Training has started!", ephemeral=True)
-                    await msg.edit(embed=embed, view=new_view)
-                else:
-                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+                await msg.edit(view=action_buttons)
+                await interaction.followup.send("Training has started!", ephemeral=True)
+            else:
+                await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
-            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+            await self.send_error_log(f"Error in start_training_callback: {str(e)}", ctx, "Start Training Error")
+            await interaction.response.send_message("An error occurred. Please try again.", ephemeral=True)
+    
 
     
     async def lock_training_callback(self, interaction):
