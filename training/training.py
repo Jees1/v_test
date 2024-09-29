@@ -58,59 +58,61 @@ class TrainingManager(commands.Cog):
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
 
-    @commands.command(aliases=['train'])
-    @checks.has_permissions(PermissionLevel.REGULAR)
-    @is_allowed_role()
-    async def training(self, ctx):
-        # Time selection for training session
-        time_options = [
-            "12 AM EST / 5 AM BST",
-            "5 AM EST / 10 AM BST",
-            "10 AM EST / 3 PM BST",
-            "3 PM EST / 8 PM BST",
-            "8 PM EST / 1 AM BST"
-        ]
-        
-        time_select = discord.ui.Select(placeholder="Select the training time...", options=time_options)
-        
-        async def time_callback(interaction):
-            selected_time = time_select.values[0]
-            self.training_start_times[ctx.guild.id] = datetime.now(timezone.utc)
-            training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
-            role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
-            session_ping = f"<@&{role_id}>"
-            host_mention = ctx.author.mention
-            start_time_unix = int(self.training_start_times[ctx.guild.id].timestamp())
+@commands.command(aliases=['train'])
+@checks.has_permissions(PermissionLevel.REGULAR)
+@is_allowed_role()
+async def training(self, ctx):
+    # Time selection for training session
+    time_options = [
+        "12 AM EST / 5 AM BST",
+        "5 AM EST / 10 AM BST",
+        "10 AM EST / 3 PM BST",
+        "3 PM EST / 8 PM BST",
+        "8 PM EST / 1 AM BST"
+    ]
 
-            embed = discord.Embed(
-                title="Training",
-                description="Training is being hosted at the Training Center! Join for a possible promotion.",
-                color=self.bot.main_color
-            )
-            embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
-            embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
-            embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
-            embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
-            embed.set_footer(text=f"Vinns Sessions")
+    # Create a select menu for the time options
+    time_select = discord.ui.Select(placeholder="Select the training time...", options=time_options)
 
-            channel = self.bot.get_channel(training_channel_id)
-            if channel:
-                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success)
-                view = discord.ui.View()
-                view.add_item(time_select)
-                view.add_item(start_button)
+    async def time_callback(interaction):
+        selected_time = time_select.values[0]  # Ensure this is correct
+        self.training_start_times[ctx.guild.id] = datetime.now(timezone.utc)
+        training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
+        session_ping = f"<@&{role_id}>"
+        host_mention = ctx.author.mention
+        start_time_unix = int(self.training_start_times[ctx.guild.id].timestamp())
 
-                msg = await channel.send(f"{session_ping}", embed=embed, view=view)
-                self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
-                
-                start_button.callback = lambda interaction: self.start_training_callback(interaction, msg.id)
-                await ctx.send(f"{emoji} | Training has been initialized! Please select a time.")
+        embed = discord.Embed(
+            title="Training",
+            description="Training is being hosted at the Training Center! Join for a possible promotion.",
+            color=self.bot.main_color
+        )
+        embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
+        embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
+        embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
+        embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
+        embed.set_footer(text=f"Vinns Sessions")
 
-            else:
-                await ctx.send("The specified channel could not be found.")
+        channel = self.bot.get_channel(training_channel_id)
+        if channel:
+            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success)
+            view = discord.ui.View()
+            view.add_item(time_select)
+            view.add_item(start_button)
 
-        time_select.callback = time_callback
-        await ctx.send("Please select the training time:", view=discord.ui.View().add_item(time_select))
+            # Send the message with the embed and view
+            msg = await channel.send(f"{session_ping}", embed=embed, view=view)
+            self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
+            
+            start_button.callback = lambda interaction: self.start_training_callback(interaction, msg.id)
+            await ctx.send(f"{emoji} | Training has been initialized! Please select a time.")
+        else:
+            await ctx.send("The specified channel could not be found.")
+
+    time_select.callback = time_callback
+    await ctx.send("Please select the training time:", view=discord.ui.View().add_item(time_select))
+
 
     async def start_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
