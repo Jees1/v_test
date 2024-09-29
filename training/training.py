@@ -137,21 +137,24 @@ class TrainingManager(commands.Cog):
                 if embed.title == "Training":
                     embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
     
-                    # Disable the Start Training button
+                    # Create a new view for the buttons
+                    new_view = discord.ui.View()
+    
+                    # Add buttons with updated states
                     for button in interaction.message.components[0].children:
                         if button.label == "Start Training":
-                            button.disabled = True
+                            button.disabled = True  # Disable Start Training button
                         elif button.label in ["Lock Training", "End Training"]:
                             button.disabled = False  # Enable Lock and End Training buttons
+                        
+                        new_view.add_item(button)  # Add button to the new view
     
-                    # Edit the message with the updated embed and the same view
-                    await msg.edit(embed=embed, view=interaction.message.components[0])  # Use the original view with updated button states
+                    await msg.edit(embed=embed, view=new_view)  # Edit the message with the new embed and view
                     await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
-
 
     async def lock_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
