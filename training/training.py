@@ -181,11 +181,12 @@ class TrainingManager(commands.Cog):
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
                         
-                        # Debugging line
-                        print(f"Attempting to edit embed: {embed.to_dict()}")
-                        
-                        await msg.edit(embed=embed)  # Ensure embed is the correct object
-                        await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
+                        try:
+                            await msg.edit(embed=embed)  # Ensure embed is the correct object
+                            await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
+                        except Exception as e:
+                            await self.send_error_log(e, ctx, "Error editing embed")
+                            await interaction.response.send_message("An error occurred while trying to update the training status.", ephemeral=True)
     
                 action_select.callback = action_callback
                 view = discord.ui.View()
@@ -198,10 +199,11 @@ class TrainingManager(commands.Cog):
         except discord.Forbidden:
             await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
         except discord.HTTPException as e:
+            await self.send_error_log(e, ctx, "HTTP error")
             await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
         except Exception as e:
-            await interaction.response.send_message(f"An unexpected error occurred: {str(e)}", ephemeral=True)
-            print(f"Error in update_status_callback: {type(e).__name__} - {e}")
+            await self.send_error_log(e, ctx, "Unexpected error")
+            await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
