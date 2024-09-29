@@ -149,7 +149,9 @@ class TrainingManager(commands.Cog):
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+#################################
 
+    
     async def update_status_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
     
@@ -170,8 +172,7 @@ class TrainingManager(commands.Cog):
     
                 # Log embed type for debugging
                 await self.send_error_log(f"Embed type: {type(embed)}", ctx, "Debugging embed type")
-                
-                # Check if embed is indeed a discord.Embed
+    
                 if not isinstance(embed, discord.Embed):
                     await self.send_error_log("Embed is not of type discord.Embed", ctx, "Invalid embed type")
                     await interaction.response.send_message("The message does not contain a valid embed.", ephemeral=True)
@@ -189,13 +190,12 @@ class TrainingManager(commands.Cog):
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
-                        
-                        # Debug logging before editing the message
+    
+                        # Log the embed before editing
                         await self.send_error_log(f"Attempting to edit embed: {embed.to_dict()}", ctx, "Editing embed")
     
-                        # Attempt to edit the message with the updated embed
                         try:
-                            await msg.edit(embed=embed)  # Ensure embed is the correct object
+                            await msg.edit(embed=embed)  # Check embed is the correct object
                             await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
                         except Exception as e:
                             await self.send_error_log(e, ctx, "Error editing embed during Lock Training")
@@ -217,7 +217,10 @@ class TrainingManager(commands.Cog):
         except Exception as e:
             await self.send_error_log(e, ctx, "Unexpected error")
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
+    
+###########################
 
+    
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
 
