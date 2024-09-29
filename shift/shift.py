@@ -63,12 +63,12 @@ class ShiftManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def shift(self, ctx):
-        self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), ctx.author.id)
+        self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc))
         shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
         role_id = self.shift_mention_roles.get(ctx.guild.id, 695243187043696650)
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
-        start_time_unix = int(self.shift_start_times[ctx.guild.id][0].timestamp())
+        start_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp())
 
         embed = discord.Embed(
             title="Shift",
@@ -83,7 +83,7 @@ class ShiftManager(commands.Cog):
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
             msg = await channel.send(f"{session_ping}", embed=embed)
-            self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), ctx.author.id, msg.id)
+            self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
             await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`")
         else:
             await ctx.send("The specified channel could not be found.")
@@ -123,12 +123,6 @@ class ShiftManager(commands.Cog):
                 embed = msg.embeds[0]
                 
                 if embed.title == "Shift":
-                    # Retrieve the host ID from the stored data
-                    host_id = self.shift_start_times[ctx.guild.id][1]
-                    if ctx.author.id != host_id:
-                        await ctx.send("You are not authorized to end this shift.")
-                        return
-
                     host_field = embed.fields[0].value
                     embed.title = "Shift Ended"
                     embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
