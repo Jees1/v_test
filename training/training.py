@@ -208,38 +208,52 @@ class TrainingManager(commands.Cog):
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
     
+        await self.send_error_log("Starting end_training_callback", ctx, "Debug")
+    
+        # Check if there is active training
         if ctx.guild.id not in self.training_start_times:
+            await self.send_error_log("No active training found", ctx, "Debug")
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
     
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
     
+        if not channel:
+            await self.send_error_log("Training channel not found", ctx, "Debug")
+            await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
+            return
+    
         try:
+            await interaction.response.defer()  # Acknowledge the interaction
+            await self.send_error_log("Fetching message", ctx, "Debug")
+    
             msg = await channel.fetch_message(message_id)
+    
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
-                
-                # Update the embed
+    
                 embed.title = "Training Ended"
                 embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
                 embed.color = 0xED4245
-                
-                # Create a new view and disable all buttons
-                new_view = discord.ui.View()
-                new_view.add_item(discord.ui.Button(label="Start Training", disabled=True))
-                new_view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
-                new_view.add_item(discord.ui.Button(label="End Training", disabled=True))
-    
-                await interaction.response.defer()  # Defer the interaction
-                await msg.edit(embed=embed, view=new_view)  # Edit the message with new embed and view
-                await interaction.followup.send("Training has ended!", ephemeral=True)
-            else:
-                await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
-        except Exception as e:
-            await self.send_error_log(f"Unexpected error in end_training_callback: {str(e)}", ctx, "End Training Error")
-            await interaction.response.send_message("An unexpected error occurred. Please try again later.", ephemeral=True)
+
+            # Create a new view and disable all buttons
+            new_view = discord.ui.View()
+            new_view.add_item(discord.ui.Button(label="Start Training", disabled=True))
+            new_view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
+            new_view.add_item(discord.ui.Button(label="End Training", disabled=True))
+
+            await msg.edit(embed=embed, view=new_view)
+            await interaction.followup.send("Training has ended!", ephemeral=True)
+            await self.send_error_log("Training ended successfully", ctx, "Debug")
+        else:
+            await interaction.followup.send("The message provided isn't valid.", ephemeral=True)
+            await self.send_error_log("Invalid message", ctx, "Debug")
+    except Exception as e:
+        await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "End Training Error")
+        await interaction.followup.send("An unexpected error occurred. Please try again later.", ephemeral=True)
+
     
 
 
