@@ -52,15 +52,20 @@ class TrainingManager(commands.Cog):
             "8 PM EST / 1 AM BST"
         ]
 
-        time_select = discord.ui.Select(placeholder="Select the training time...", options=[discord.SelectOption(label=time) for time in time_options])
+        time_select = discord.ui.Select(
+            placeholder="Select the training time...",
+            options=[discord.SelectOption(label=time) for time in time_options]
+        )
 
         async def time_callback(interaction):
             await interaction.response.defer()
             selected_time = time_select.values[0]
             self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))
 
-            training_channel_id = ctx.channel.id  # Use current channel for simplicity
-            role_id = 738396997135892540  # Default role ID
+            training_channel_id = ctx.channel.id  # Use current channel
+            self.training_channel_ids[ctx.guild.id] = training_channel_id  # Store training channel ID
+
+            role_id = self.training_mention_roles.get(ctx.guild.id, 738396997135892540)  # Default role ID
             session_ping = f"<@&{role_id}>"
             host_mention = ctx.author.mention
 
@@ -70,8 +75,9 @@ class TrainingManager(commands.Cog):
                 color=0x00ff00
             )
             embed.add_field(name="Host", value=host_mention, inline=False)
-            embed.add_field(name="Session Status", value="Waiting to start", inline=False)
+            embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
             embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
+            embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
 
             channel = self.bot.get_channel(training_channel_id)
             if channel:
@@ -110,8 +116,8 @@ class TrainingManager(commands.Cog):
         if guild_id not in self.training_start_times:
             await interaction.followup.send("No active training found for this server.", ephemeral=True)
             return
-        
-        training_channel_id = self.training_channel_ids.get(guild_id, None)
+
+        training_channel_id = self.training_channel_ids.get(guild_id)
         if training_channel_id is None:
             await interaction.followup.send("No training channel set.", ephemeral=True)
             return
@@ -126,6 +132,7 @@ class TrainingManager(commands.Cog):
             embed = msg.embeds[0]
             embed.title = "Training Ended"
             embed.description = "The training has just ended. Thank you for attending!"
+            embed.color = 0xED4245  # Change color for end of training
             await msg.edit(embed=embed)
             await interaction.followup.send("Training has ended!", ephemeral=True)
         except Exception as e:
@@ -143,6 +150,23 @@ class TrainingManager(commands.Cog):
     async def trainingchannel(self, ctx, channel: discord.TextChannel):
         self.training_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"Training messages will now be sent in {channel.mention}.")
+
+    @commands.command()
+    @is_admin_user()
+    async def trainingconfig(self, ctx):
+        if ctx.channel.id != 836283712193953882:  # Ensure the command is used in the correct channel
+            await ctx.send("Wrong channel buddy")
+            return
+
+        config_info = f"""```yaml
+        Training Start Times: {self.training_start_times}
+        Training Channel IDs: {self.training_channel_ids}
+        Training Mention Roles: {self.training_mention_roles}
+        Allowed Roles: {ALLOWED_ROLES}
+        Admin Users: {ADMIN_USERS}
+        ```"""
+
+        await ctx.send(config_info)
 
 async def setup(bot):
     await bot.add_cog(TrainingManager(bot))
