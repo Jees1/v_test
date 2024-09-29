@@ -88,7 +88,7 @@ class TrainingManager(commands.Cog):
                 color=self.bot.main_color
             )
             embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
-            embed.add_field(name="Session Status", value=f"Waiting for the host to begin the training", inline=False)
+            embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
             embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
             embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
             embed.set_footer(text=f"Vinns Sessions")
@@ -194,36 +194,35 @@ class TrainingManager(commands.Cog):
         except discord.Forbidden:
             await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
 
-
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
 
         if ctx.guild.id not in self.training_start_times:
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
-    
+        
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
         if not channel:
             await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
             return
-    
+        
         try:
             msg = await channel.fetch_message(message_id)
-            if msg.embeds and msg.author.id == 738395338393518222:
+            if msg.embeds and msg.author.id == self.bot.user.id:
                 delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
                 embed = msg.embeds[0]
                 
                 if embed.title == "Training":
                     host_field = embed.fields[0].value
                     embed.title = "Training Ended"
-                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future trainings.\n\nDeleting this message <t:{delete_time_unix}:R>"
+                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending! Deleting this message <t:{delete_time_unix}:R>"
                     embed.color = 0xED4245
                     embed.set_footer(text=f"Ended by: {interaction.user.name}")
                     embed.clear_fields()
                     await msg.edit(embed=embed, view=None)
                     await interaction.response.send_message(f"{emoji} | Training has ended.", ephemeral=True)
-        
+
                     # Wait for 10 minutes before deleting the message
                     await asyncio.sleep(600)  # 600 seconds = 10 minutes
                     await msg.delete()  # Delete the edited message after 10 minutes
@@ -253,4 +252,43 @@ class TrainingManager(commands.Cog):
         await ctx.send(f"{emoji} | Training messages will now be sent in {channel.mention}.")
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.
+    @checks.has_permissions(PermissionLevel.OWNER)
+    @is_admin_user()
+    async def trainingconfig(self, ctx):
+        # Restrict command usage to specific channel
+        if ctx.channel.id != 836283712193953882:
+            await ctx.send("Wrong channel buddy")
+            return
+    
+        # Create a string representation of the current configuration
+        config_info = f"""```yaml
+    Training Start Times: {self.training_start_times}
+    Training Channel IDs: {self.training_channel_ids}
+    Training Mention Roles: {self.training_mention_roles}
+    Allowed Roles: {ALLOWED_ROLES}
+    Admin Users: {ADMIN_USERS}
+    ```"""
+    
+        await ctx.send(config_info)
+
+    @training.error
+    async def training_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("You need to specify a role to mention. Usage: `-training`.")
+        elif isinstance(error, commands.MissingRole):
+            await ctx.send("You don't have the required role to use this command.")
+        else:
+            await self.send_error_log(error, ctx, "training_error")
+            print(f"Error: {error}")
+
+    @trainingmention.error
+    @trainingchannel.error
+    async def command_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have permission to use this command.")
+        else:
+            await self.send_error_log(error, ctx, "command_error")
+            print(f"Error: {error}")
+
+async def setup(bot):
+    await bot.add_cog(TrainingManager(bot))
