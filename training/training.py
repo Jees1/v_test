@@ -180,6 +180,10 @@ class TrainingManager(commands.Cog):
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
+                        
+                        # Debugging line
+                        print(f"Attempting to edit embed: {embed.to_dict()}")
+                        
                         await msg.edit(embed=embed)  # Ensure embed is the correct object
                         await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
     
@@ -189,10 +193,16 @@ class TrainingManager(commands.Cog):
                 await interaction.response.send_message("Select an action:", view=view, ephemeral=True)
             else:
                 await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
+        except discord.NotFound:
+            await interaction.response.send_message("Message not found.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+        except discord.HTTPException as e:
+            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
         except Exception as e:
-            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
-            print(f"Error in update_status_callback: {e}")
-            
+            await interaction.response.send_message(f"An unexpected error occurred: {str(e)}", ephemeral=True)
+            print(f"Error in update_status_callback: {type(e).__name__} - {e}")
+
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
 
