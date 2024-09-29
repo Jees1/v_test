@@ -180,25 +180,31 @@ class TrainingManager(commands.Cog):
                         await self.end_training_callback(interaction, msg.id)
                     elif selected_action == "Lock Training":
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
-    
-                        # Log before modification
-                        await self.send_error_log(f"Before Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
-    
-                        embed.title = "Training Locked"
-                        embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
-                        embed.color = 0xED4245
-    
-                        # Log after modification
-                        await self.send_error_log(f"After Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
-    
+                
+                        # Create a new embed based on the original
+                        new_embed = discord.Embed(
+                            title="Training Locked",
+                            description=f"The training session is now locked. Time locked: <t:{lock_time_unix}>",
+                            color=0xED4245
+                        )
+                
+                        # Copy over the footer and other necessary fields if needed
+                        new_embed.set_footer(text=embed.footer.text)
+                        new_embed.add_field(name='Host', value=embed.fields[0].value, inline=False)
+                        new_embed.add_field(name='Session Status', value='Training has been locked!', inline=False)
+                        new_embed.add_field(name='Scheduled Time', value=embed.fields[2].value, inline=False)
+                        new_embed.add_field(name='Training Center Link', value=embed.fields[3].value, inline=False)
+                
+                        # Log before editing the message
+                        await self.send_error_log(f"Editing message with new embed: {new_embed.to_dict()}", ctx, "Editing message with new embed")
+                        
                         try:
-                            # Check what is being passed to msg.edit
-                            await self.send_error_log(f"Editing message with embed: {embed.to_dict()}", ctx, "Editing message")
-                            await msg.edit(embed=embed)
+                            await msg.edit(embed=new_embed)
                             await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
                         except Exception as e:
                             await self.send_error_log(e, ctx, "Error editing embed during Lock Training")
                             await interaction.response.send_message("An error occurred while trying to update the training status.", ephemeral=True)
+
     
                 action_select.callback = action_callback
                 view = discord.ui.View()
