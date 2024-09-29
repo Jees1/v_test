@@ -176,14 +176,21 @@ class TrainingManager(commands.Cog):
                 action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
     
                 async def action_callback(interaction):
+                    await self.send_error_log(f"1", ctx, "1")
                     selected_action = action_select.values[0]
+                    await self.send_error_log(f"2", ctx, "2")
                     if selected_action == "End Training":
+                        await self.send_error_log(f"3", ctx, "3")
                         await self.end_training_callback(interaction, msg.id)
+                        await self.send_error_log(f"4", ctx, "4")
                     elif selected_action == "Lock Training":
+                        await self.send_error_log(f"5", ctx, "5")
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
+                        await self.send_error_log(f"6", ctx, "6")
     
                         # Log before modifying the embed
                         await self.send_error_log(f"Before Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
+                        await self.send_error_log(f"7", ctx, "7")
     
                         new_embed = discord.Embed(
                             title="Training Locked",
@@ -191,30 +198,44 @@ class TrainingManager(commands.Cog):
                             color=0xED4245
                         )
                         new_embed.set_footer(text=embed.footer.text)  # Copy footer
-    
+                        await self.send_error_log(f"8", ctx, "8")
                         # Log after creating the new embed
                         await self.send_error_log(f"New embed for Lock Training: {new_embed.to_dict()}", ctx, "New Lock Embed")
-    
+                        await self.send_error_log(f"9", ctx, "9")
                         try:
                             await msg.edit(embed=new_embed)  # Edit with the new embed
+                            await self.send_error_log(f"10", ctx, "10")
                             await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
+                            await self.send_error_log(f"11", ctx, "11")
                         except Exception as e:
+                            await self.send_error_log(f"12", ctx, "12")
                             await self.send_error_log(e, ctx, "Error editing embed during Lock Training")
+                            await self.send_error_log(f"13", ctx, "13")
                             await interaction.response.send_message("An error occurred while trying to update the training status.", ephemeral=True)
+                            await self.send_error_log(f"14", ctx, "14")
     
                 action_select.callback = action_callback
+                await self.send_error_log(f"15", ctx, "15")
                 view = discord.ui.View()
+                await self.send_error_log(f"16", ctx, "16")
                 view.add_item(action_select)
+                await self.send_error_log(f"17", ctx, "17")
                 await interaction.response.send_message("Select an action:", view=view, ephemeral=True)
+                await self.send_error_log(f"18", ctx, "18")
             else:
+                await self.send_error_log(f"19", ctx, "19")
                 await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
+                await self.send_error_log(f"20", ctx, "20")
         except discord.NotFound:
             await interaction.response.send_message("Message not found.", ephemeral=True)
+            await self.send_error_log(f"21", ctx, "21")
         except discord.Forbidden:
             await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+            await self.send_error_log(f"22", ctx, "22")
         except Exception as e:
             await self.send_error_log(e, ctx, "Unexpected error")
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
+            await self.send_error_log(f"23", ctx, "23")
 
 ###########################
 
