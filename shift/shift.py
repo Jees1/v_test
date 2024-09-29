@@ -68,7 +68,7 @@ class ShiftManager(commands.Cog):
         if channel:
             msg = await channel.send(f"{session_ping}", embed=embed)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
-            await ctx.send(f"<:cow:1012643349150314496> | Shift has been started!\n`msgID: {msg.id}`")
+            await ctx.send(f"<:cow:1012643349150314496> | Shift has been started!\n\n`msgID: {msg.id}`")
         else:
             await ctx.send("The specified channel could not be found.")
 
