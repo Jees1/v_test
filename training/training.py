@@ -74,12 +74,12 @@ class TrainingManager(commands.Cog):
 
         async def time_callback(interaction):
             selected_time = time_select.values[0]  
-            self.training_start_times[ctx.guild.id] = datetime.now(timezone.utc)
+            self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))  # Store the selected time
+            
             training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
             role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
             session_ping = f"<@&{role_id}>"
             host_mention = ctx.author.mention
-            start_time_unix = int(self.training_start_times[ctx.guild.id].timestamp())
 
             embed = discord.Embed(
                 title="Training",
@@ -88,7 +88,7 @@ class TrainingManager(commands.Cog):
             )
             embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
             embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
-            embed.add_field(name="Scheduled Time", value="Time selected by the host", inline=False)
+            embed.add_field(name="Scheduled Time", value=selected_time, inline=False)  # Use the selected time
             embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
             embed.set_footer(text=f"Vinns Sessions")
 
@@ -102,7 +102,7 @@ class TrainingManager(commands.Cog):
                 
                 try:
                     msg = await channel.send(f"{session_ping}", embed=embed, view=view)
-                    self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
+                    self.training_start_times[ctx.guild.id] = (selected_time, msg.id)  # Store message ID
                     await ctx.send(f"{emoji} | Training has been initialized! Please select a time.")
                 except Exception as e:
                     await self.send_error_log(e, ctx, "Error sending training message")
@@ -214,7 +214,7 @@ class TrainingManager(commands.Cog):
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 10 minutes
                 embed = msg.embeds[0]
 
                 if embed.title == "Training":
@@ -227,7 +227,8 @@ class TrainingManager(commands.Cog):
                     await msg.edit(embed=embed, view=None)
                     await interaction.response.send_message(f"{emoji} | Training has ended.", ephemeral=True)
 
-                    await asyncio.sleep(600)
+                    # Wait for 10 minutes before deleting the message
+                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
                     await msg.delete()
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
