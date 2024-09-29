@@ -208,18 +208,29 @@ class TrainingManager(commands.Cog):
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
     
+        # Log if there's no active training
         if ctx.guild.id not in self.training_start_times:
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
     
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
+    
+        # Log if the channel cannot be found
         if not channel:
             await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
             return
     
         try:
             msg = await channel.fetch_message(message_id)
+    
+            # Log if the message cannot be fetched
+            if not msg:
+                await self.send_error_log("Message could not be fetched.", ctx, "Fetch Message Error")
+                await interaction.response.send_message("Message not found.", ephemeral=True)
+                return
+    
+            # Check for valid embed
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
@@ -239,8 +250,9 @@ class TrainingManager(commands.Cog):
                 new_view.add_item(end_button)
     
                 # Acknowledge the interaction first
-                await interaction.response.defer()  # This acknowledges the interaction without responding immediately
+                await interaction.response.defer()
     
+                # Edit the message with the updated embed and new view
                 await msg.edit(embed=embed, view=new_view)
                 await interaction.followup.send("Training has ended!", ephemeral=True)
     
@@ -250,8 +262,9 @@ class TrainingManager(commands.Cog):
             else:
                 await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
-            await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
-            await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
+            await self.send_error_log(f"Unexpected error while ending training: {str(e)}", ctx, "End Training Error")
+            await interaction.response.send_message("An unexpected error occurred. Please try again later.", ephemeral=True)
+
 
 
 
