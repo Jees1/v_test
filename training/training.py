@@ -68,7 +68,7 @@ class TrainingManager(commands.Cog):
             embed = discord.Embed(
                 title="Training",
                 description="Training is being hosted at the Training Center! Join for a possible promotion.",
-                color=0x00ff00  # Change to your desired color
+                color=0x00ff00
             )
             embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
             embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
@@ -124,10 +124,11 @@ class TrainingManager(commands.Cog):
 
                     # Create the Lock Training button
                     lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
+
                     async def lock_training_callback(interaction):
-                        # Check if the user has an allowed role
+                        await interaction.response.defer()  # Acknowledge the interaction
                         if not await self.is_allowed_role()(ctx):
-                            await interaction.response.send_message("You can't do that.", ephemeral=True)
+                            await interaction.followup.send("You can't do that.", ephemeral=True)
                             return
 
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
@@ -136,16 +137,17 @@ class TrainingManager(commands.Cog):
                         embed.set_field_at(1, name="Session Status", value="Training Locked", inline=False)
                         embed.color = 0xED4245  # Red for locked status
                         await msg.edit(embed=embed, view=None)  # Remove buttons after locking
-                        await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
+                        await interaction.followup.send(f"{emoji} | Training has been locked.", ephemeral=True)
 
                     lock_button.callback = lock_training_callback
 
                     # Create the End Training button
                     end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+
                     async def end_training_callback(interaction):
-                        # Check if the user has an allowed role
+                        await interaction.response.defer()  # Acknowledge the interaction
                         if not await self.is_allowed_role()(ctx):
-                            await interaction.response.send_message("You can't do that.", ephemeral=True)
+                            await interaction.followup.send("You can't do that.", ephemeral=True)
                             return
                         
                         await self.end_training_callback(interaction, msg.id)
