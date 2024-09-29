@@ -102,22 +102,25 @@ class ShiftManager(commands.Cog):
     
         try:
             msg = await channel.fetch_message(message_id)
-            if msg.embeds and msg.author.id:
+            if msg.embeds and msg.author.id == 738395338393518222:
                 delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
                 embed = msg.embeds[0]
-                host_field = embed.fields[0].value
-                embed.title = "Shift Ended"
-                embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
-                embed.color = 0xED4245
-                embed.clear_fields()
-                await msg.edit(embed=embed)
-                await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID `{message_id}` has ended.")
-    
-                # Wait for 15 minutes before deleting the message
-                await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                await msg.delete()  # Delete the edited message after 15 minutes
+                if embed.title == "Shift":
+                    host_field = embed.fields[0].value
+                    embed.title = "Shift Ended"
+                    embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
+                    embed.color = 0xED4245
+                    embed.clear_fields()
+                    await msg.edit(embed=embed)
+                    await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID `{message_id}` has ended.")
+        
+                    # Wait for 15 minutes before deleting the message
+                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
+                    await msg.delete()  # Delete the edited message after 15 minutes
+                else:
+                    await ctx.send("The message provided isn't valid.")
             else:
-                await ctx.send("The message does not contain an embed.")
+                await ctx.send("The message provided does not contain an embed or isn't valid.")
         except discord.NotFound:
             await ctx.send("Message not found.")
         except discord.Forbidden:
