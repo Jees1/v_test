@@ -132,29 +132,32 @@ class TrainingManager(commands.Cog):
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
                 embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
-                await msg.edit(embed=embed)
     
-                # Create buttons
-                action_buttons = discord.ui.View()
+                # Create buttons and set states
+                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
                 lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
                 end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
     
                 # Set callbacks
                 lock_button.callback = self.lock_training_callback
-                end_button.callback = lambda interaction: self.end_training_callback(interaction, msg.id)
+                end_button.callback = lambda inter: self.end_training_callback(inter, msg.id)
     
-                # Add buttons
+                # Create a new view and add buttons
+                action_buttons = discord.ui.View()
+                action_buttons.add_item(start_button)
                 action_buttons.add_item(lock_button)
                 action_buttons.add_item(end_button)
     
-                await msg.edit(view=action_buttons)
+                # Edit the message
+                await interaction.response.defer()  # Defer the interaction
+                await msg.edit(embed=embed, view=action_buttons)
                 await interaction.followup.send("Training has started!", ephemeral=True)
             else:
                 await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await self.send_error_log(f"Error in start_training_callback: {str(e)}", ctx, "Start Training Error")
             await interaction.response.send_message("An error occurred. Please try again.", ephemeral=True)
-    
+
 
     
     async def lock_training_callback(self, interaction):
@@ -201,6 +204,7 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
 
+  
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
     
@@ -217,24 +221,25 @@ class TrainingManager(commands.Cog):
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
                 
+                # Update the embed
                 embed.title = "Training Ended"
                 embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
                 embed.color = 0xED4245
                 
+                # Create a new view and disable all buttons
                 new_view = discord.ui.View()
                 new_view.add_item(discord.ui.Button(label="Start Training", disabled=True))
                 new_view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
                 new_view.add_item(discord.ui.Button(label="End Training", disabled=True))
     
-                await interaction.response.defer()
-                await msg.edit(embed=embed, view=new_view)
+                await interaction.response.defer()  # Defer the interaction
+                await msg.edit(embed=embed, view=new_view)  # Edit the message with new embed and view
                 await interaction.followup.send("Training has ended!", ephemeral=True)
             else:
                 await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await self.send_error_log(f"Unexpected error in end_training_callback: {str(e)}", ctx, "End Training Error")
             await interaction.response.send_message("An unexpected error occurred. Please try again later.", ephemeral=True)
-
 
 
 
