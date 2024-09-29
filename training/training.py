@@ -142,7 +142,8 @@ class TrainingManager(commands.Cog):
                         if item.label in ["Lock Training", "End Training"]:
                             item.disabled = False
 
-                    await msg.edit(embed=embed, view=interaction.message.components[0])
+                    # Edit the message with the updated embed and view
+                    await msg.edit(embed=embed, view=interaction.message.components[0])  # Use the original view
                     await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
@@ -173,11 +174,11 @@ class TrainingManager(commands.Cog):
                     embed.set_field_at(1, name="Session Status", value="Training Locked", inline=False)
                     embed.color = 0xED4245
 
-                    # Disable buttons
+                    # Disable all buttons
                     for item in interaction.message.components[0].children:
                         item.disabled = True
 
-                    await msg.edit(embed=embed, view=interaction.message.components[0])
+                    await msg.edit(embed=embed, view=interaction.message.components[0])  # Use the original view
                     await interaction.followup.send(f"{emoji} | Training has been locked.", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
@@ -201,20 +202,24 @@ class TrainingManager(commands.Cog):
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 10 minutes
                 embed = msg.embeds[0]
 
                 if embed.title == "Training":
                     host_field = embed.fields[0].value
                     embed.title = "Training Ended"
-                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
+                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending! Deleting this message <t:{delete_time_unix}:R>"
                     embed.color = 0xED4245
 
-                    # Disable buttons
+                    # Disable all buttons
                     for item in interaction.message.components[0].children:
                         item.disabled = True
 
-                    await msg.edit(embed=embed, view=interaction.message.components[0])
+                    await msg.edit(embed=embed, view=interaction.message.components[0])  # Use the original view
                     await interaction.response.send_message("Training has ended!", ephemeral=True)
+
+                    await asyncio.sleep(600)  # Wait 10 minutes before deleting
+                    await msg.delete()
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
