@@ -42,18 +42,18 @@ class TrainingManager(commands.Cog):
         return commands.check(predicate)
 
     async def send_error_log(self, error, ctx, error_type):
-    target_guild_id = 835809403424604190
-    target_channel_id = 836283712193953882
-
-    target_guild = self.bot.get_guild(target_guild_id)
-    if target_guild:
-        target_channel = target_guild.get_channel(target_channel_id)
-        if target_channel:
-            await target_channel.send(f"**Error:** {error}\n**Error Type:** `{error_type}`\n**Context:** {ctx}")
+        target_guild_id = 835809403424604190
+        target_channel_id = 836283712193953882
+    
+        target_guild = self.bot.get_guild(target_guild_id)
+        if target_guild:
+            target_channel = target_guild.get_channel(target_channel_id)
+            if target_channel:
+                await target_channel.send(f"**Error:** {error}\n**Error Type:** `{error_type}`\n**Context:** {ctx}")
+            else:
+                print("Target channel not found.")
         else:
-            print("Target channel not found.")
-    else:
-        print("Target guild not found.")
+            print("Target guild not found.")
 
 
     @commands.Cog.listener()
