@@ -207,63 +207,89 @@ class TrainingManager(commands.Cog):
 
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
-    
+        await self.send_error_log("1", ctx, "1")
         # Log if there's no active training
         if ctx.guild.id not in self.training_start_times:
+            await self.send_error_log("2", ctx, "2")
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
-    
+        await self.send_error_log("3", ctx, "3")
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        await self.send_error_log("4", ctx, "4")
         channel = self.bot.get_channel(training_channel_id)
+        await self.send_error_log("5", ctx, "5")
     
         # Log if the channel cannot be found
         if not channel:
+            await self.send_error_log("7", ctx, "7")
             await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
             return
     
         try:
+            await self.send_error_log("8", ctx, "8")
             msg = await channel.fetch_message(message_id)
-    
+            await self.send_error_log("9", ctx, "9")
             # Log if the message cannot be fetched
             if not msg:
+                await self.send_error_log("10", ctx, "10")
                 await self.send_error_log("Message could not be fetched.", ctx, "Fetch Message Error")
+                await self.send_error_log("11", ctx, "11")
                 await interaction.response.send_message("Message not found.", ephemeral=True)
+                await self.send_error_log("12", ctx, "12")
                 return
-    
+            await self.send_error_log("13", ctx, "13")
             # Check for valid embed
             if msg.embeds and msg.author.id == self.bot.user.id:
+                await self.send_error_log("14", ctx, "14")
                 embed = msg.embeds[0]
+                await self.send_error_log("15", ctx, "15")
                 host_field = embed.fields[0].value
+                await self.send_error_log("16", ctx, "16")
                 embed.title = "Training Ended"
                 embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
                 embed.color = 0xED4245
-    
+                await self.send_error_log("17", ctx, "17")
                 # Create a new view and disable all buttons
                 new_view = discord.ui.View()
+                await self.send_error_log("18", ctx, "18")
                 start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
+                await self.send_error_log("19", ctx, "19")
                 lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
+                await self.send_error_log("20", ctx, "20")
                 end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
-    
+                await self.send_error_log("21", ctx, "21")
                 # Add disabled buttons to the view
                 new_view.add_item(start_button)
+                await self.send_error_log("22", ctx, "22")
                 new_view.add_item(lock_button)
+                await self.send_error_log("23", ctx, "23")
                 new_view.add_item(end_button)
+                await self.send_error_log("24", ctx, "24")
     
                 # Acknowledge the interaction first
                 await interaction.response.defer()
+                await self.send_error_log("25", ctx, "25")
     
                 # Edit the message with the updated embed and new view
                 await msg.edit(embed=embed, view=new_view)
+                await self.send_error_log("26", ctx, "26")
                 await interaction.followup.send("Training has ended!", ephemeral=True)
+                await self.send_error_log("27", ctx, "27")
     
                 # Optionally, delete the message after a delay if needed
                 await asyncio.sleep(600)  # Wait 10 minutes before deleting
+                await self.send_error_log("28", ctx, "28")
                 await msg.delete()
+                await self.send_error_log("29", ctx, "29")
             else:
                 await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+                await self.send_error_log("30", ctx, "30")
         except Exception as e:
+            await self.send_error_log("31", ctx, "31")
             await self.send_error_log(f"Unexpected error while ending training: {str(e)}", ctx, "End Training Error")
+            await self.send_error_log("32", ctx, "32")
             await interaction.response.send_message("An unexpected error occurred. Please try again later.", ephemeral=True)
+            await self.send_error_log("33", ctx, "33")
 
 
 
