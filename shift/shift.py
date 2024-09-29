@@ -41,6 +41,20 @@ class ShiftManager(commands.Cog):
             return ctx.author.id in ADMIN_USERS
         return commands.check(predicate)
 
+    async def send_error_log(self, error, ctx, error_type):
+        target_guild_id = 835809403424604190
+        target_channel_id = 836283712193953882
+    
+        target_guild = self.bot.get_guild(target_guild_id)
+        if target_guild:
+            target_channel = target_guild.get_channel(target_channel_id)
+            if target_channel:
+                await target_channel.send(f"**Error:** {error}\n**Error Type:** `{error_type}`\n**Context:** {ctx}")
+            else:
+                print("Target channel not found.")
+        else:
+            print("Target guild not found.")
+
     @commands.Cog.listener()
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
@@ -49,7 +63,7 @@ class ShiftManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def shift(self, ctx):
-        self.shift_start_times[ctx.guild.id] = datetime.now(timezone.utc)
+        self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), ctx.author.id)
         shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
         role_id = self.shift_mention_roles.get(ctx.guild.id, 695243187043696650)
         session_ping = f"<@&{role_id}>"
@@ -69,7 +83,7 @@ class ShiftManager(commands.Cog):
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
             msg = await channel.send(f"{session_ping}", embed=embed)
-            self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
+            self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), ctx.author.id, msg.id)
             await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`")
         else:
             await ctx.send("The specified channel could not be found.")
@@ -107,7 +121,14 @@ class ShiftManager(commands.Cog):
             if msg.embeds and msg.author.id == 738395338393518222:
                 delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
                 embed = msg.embeds[0]
+                
                 if embed.title == "Shift":
+                    # Retrieve the host ID from the stored data
+                    host_id = self.shift_start_times[ctx.guild.id][1]
+                    if ctx.author.id != host_id:
+                        await ctx.send("You are not authorized to end this shift.")
+                        return
+
                     host_field = embed.fields[0].value
                     embed.title = "Shift Ended"
                     embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
@@ -160,7 +181,8 @@ class ShiftManager(commands.Cog):
         elif isinstance(error, commands.MissingRole):
             await ctx.send("You don't have the required role to use this command.")
         else:
-            await ctx.send("An unexpected error occurred.")
+            # await ctx.send("An unexpected error occurred."),
+            await self.send_error_log(error, ctx, "shift_error")
             print(f"Error: {error}")
 
     @shiftmention.error
@@ -169,32 +191,18 @@ class ShiftManager(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to use this command.")
         else:
-            await ctx.send("An unexpected error occurred.")
+            # await ctx.send("An unexpected error occurred.")
+            await self.send_error_log(error, ctx, "command_error")
             print(f"Error: {error}")
 
     @endshift.error
     async def endshift_error(self, ctx, error):
-        
-        target_guild_id = 835809403424604190
-        target_channel_id = 836283712193953882
-        
-        
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <msgID>`.")
         else:
-            await ctx.send("An unexpected error occurred.")
-            
-            # Get the target channel in the other guild
-            target_guild = self.bot.get_guild(target_guild_id)
-            if target_guild:
-                target_channel = target_guild.get_channel(target_channel_id)
-                if target_channel:
-                    # Send the error details to the specified channel
-                    await target_channel.send(f"EndShift Error: {error}\nError Type: {type(error)}\nContext: {ctx}")
-                else:
-                    print("Target channel not found.")
-            else:
-                print("Target guild not found.")
+            # await ctx.send("An unexpected error occurred.")
+            await self.send_error_log(error, ctx, "endshift_error")
+            print(f"Error: {error}")
 
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
