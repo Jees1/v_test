@@ -91,11 +91,11 @@ class ShiftManager(commands.Cog):
 
             confirmation_msg = await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`", view=view)
 
-            button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id, confirmation_msg.id)
+            button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id, confirmation_msg)
         else:
             await ctx.send("The specified channel could not be found.")
 
-    async def end_shift_callback(self, interaction, message_id, confirmation_msg_id):
+    async def end_shift_callback(self, interaction, message_id, confirmation_msg):
         ctx = await self.bot.get_context(interaction.message)
 
         if ctx.guild.id not in self.shift_start_times:
@@ -122,15 +122,14 @@ class ShiftManager(commands.Cog):
                     embed.clear_fields()
                     await msg.edit(embed=embed)
 
-                    await interaction.response.send_message(f"{emoji} | Shift has ended.", ephemeral=True)
+                    # Edit the confirmation message
+                    await confirmation_msg.edit(content=f"{emoji} | EDIT: Successfully ended the shift!", view=None)
+
+                    await interaction.response.send_message("Shift has ended.", ephemeral=True)
 
                     # Wait for 10 minutes before deleting the message
                     await asyncio.sleep(600)  # 600 seconds = 10 minutes
                     await msg.delete()  # Delete the edited message after 10 minutes
-
-                    # Also delete the confirmation message
-                    confirmation_msg = await ctx.fetch_message(confirmation_msg_id)
-                    await confirmation_msg.delete()
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
             else:
