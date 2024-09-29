@@ -41,6 +41,21 @@ class TrainingManager(commands.Cog):
             return ctx.author.id in ADMIN_USERS
         return commands.check(predicate)
 
+    async def send_error_log(self, error, ctx, error_type):
+    target_guild_id = 835809403424604190
+    target_channel_id = 836283712193953882
+
+    target_guild = self.bot.get_guild(target_guild_id)
+    if target_guild:
+        target_channel = target_guild.get_channel(target_channel_id)
+        if target_channel:
+            await target_channel.send(f"**Error:** {error}\n**Error Type:** `{error_type}`\n**Context:** {ctx}")
+        else:
+            print("Target channel not found.")
+    else:
+        print("Target guild not found.")
+
+
     @commands.Cog.listener()
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
@@ -152,49 +167,37 @@ class TrainingManager(commands.Cog):
         await ctx.send(config_info)
     
 
+@endtraining.error
+async def endtraining_error(self, ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please provide the message ID for the training to end. Usage: `-endtraining <msgID>`.") 
+    elif isinstance(error, commands.BadArgument):
+        await ctx.send("Invalid message ID provided.")
+    else:
+        await ctx.send("An unexpected error occurred.")
+        print(f"Unexpected error in endtraining command: {error}")
+        await self.send_error_log(error, ctx, "endtraining_error")
 
-    @training.error
-    async def training_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("You need to specify a role to mention. Usage: `-training`.")
-        elif isinstance(error, commands.MissingRole):
-            await ctx.send("You don't have the required role to use this command.")
-        else:
-            await ctx.send("An unexpected error occurred.")
-            print(f"Error: {error}")
+@training.error
+async def training_error(self, ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("You need to specify a role to mention. Usage: `-training`.")
+    elif isinstance(error, commands.MissingRole):
+        await ctx.send("You don't have the required role to use this command.")
+    else:
+        await ctx.send("An unexpected error occurred.")
+        print(f"Unexpected error in training command: {error}")
+        await self.send_error_log(error, ctx, "training_error")
 
-    @trainingmention.error
-    @trainingchannel.error
-    async def command_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to use this command.")
-        else:
-            await ctx.send("An unexpected error occurred.")
-            print(f"Error: {error}")
-
-    @endtraining.error
-    async def endtraining_error(self, ctx, error):
-        
-        target_guild_id = 835809403424604190
-        target_channel_id = 836283712193953882
-        
-        
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please provide the message ID for the training to end. Usage: `-endtraining <msgID>`.")
-        else:
-            await ctx.send("An unexpected error occurred.")
-            
-            # Get the target channel in the other guild
-            target_guild = self.bot.get_guild(target_guild_id)
-            if target_guild:
-                target_channel = target_guild.get_channel(target_channel_id)
-                if target_channel:
-                    # Send the error details to the specified channel
-                    await target_channel.send(f"EndTraining Error: {error}\nError Type: {type(error)}\nContext: {ctx}")
-                else:
-                    print("Target channel not found.")
-            else:
-                print("Target guild not found.")
+@trainingmention.error
+@trainingchannel.error
+async def command_error(self, ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("You do not have permission to use this command.")
+    else:
+        await ctx.send("An unexpected error occurred.")
+        print(f"Unexpected error in command: {error}")
+        await self.send_error_log(error, ctx, "command_error")
 
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
