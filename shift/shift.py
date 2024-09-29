@@ -66,7 +66,7 @@ class ShiftManager(commands.Cog):
 
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
-            msg = await channel.send(f"{session_ping} {ctx.author.mention} is hosting a shift!", embed=embed)
+            msg = await channel.send(f"{session_ping}", embed=embed)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
             await ctx.send(f"<:cow:1012643349150314496> | Shift has been started!\n`msgID: {msg.id}`")
         else:
