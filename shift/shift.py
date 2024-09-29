@@ -59,7 +59,7 @@ class ShiftManager(commands.Cog):
             description=f"{session_ping}, a shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
             color=self.bot.main_color
         )
-        embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{" | "ctx.author.nick if ctx.author.nick else ""}", inline=False)
+        embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
         embed.set_footer(text=f"Vinns Hotel - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
