@@ -58,7 +58,7 @@ class TrainingManager(commands.Cog):
 
         embed = discord.Embed(
             title="Training",
-            description=f"A training is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
+            description=f"A training is currently being hosted at the training center!",
             color=self.bot.main_color
         )
         embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
