@@ -130,8 +130,8 @@ class ShiftManager(commands.Cog):
 
 
     @commands.command()
-    @commands.has_permissions(PermissionLevel.OWNER)
-    @is_allowed_role()
+    @checks.has_permissions(PermissionLevel.OWNER)
+    @is_admin_user()
     async def shiftconfig(self, ctx):
         # Restrict command usage to specific channel
         if ctx.channel.id != 836283712193953882:
