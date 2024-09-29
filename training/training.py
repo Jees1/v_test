@@ -78,15 +78,33 @@ class TrainingManager(commands.Cog):
 
             channel = self.bot.get_channel(training_channel_id)
             if channel:
-                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success)
                 view = discord.ui.View()
+
+                # Start Training button
+                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success)
                 view.add_item(start_button)
 
                 async def start_training_callback(interaction):
                     await self.start_training_callback(interaction, msg.id)
 
                 start_button.callback = start_training_callback
-                
+
+                # Lock Training button
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
+                async def lock_training_callback(interaction):
+                    await self.lock_training_callback(interaction, msg.id)
+
+                lock_button.callback = lock_training_callback
+                view.add_item(lock_button)
+
+                # End Training button
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+                async def end_training_callback(interaction):
+                    await self.end_training_callback(interaction, msg.id)
+
+                end_button.callback = end_training_callback
+                view.add_item(end_button)
+
                 try:
                     msg = await channel.send(f"{session_ping}", embed=embed, view=view)
                     self.training_start_times[ctx.guild.id] = (selected_time, msg.id)
@@ -120,44 +138,47 @@ class TrainingManager(commands.Cog):
                     embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
                     await msg.edit(embed=embed)
 
-                    action_buttons = discord.ui.View()
-
-                    # Lock Training button
-                    lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
-                    async def lock_training_callback(interaction):
-                        await interaction.response.defer()
-                        if not await self.is_allowed_role()(ctx):
-                            await interaction.followup.send("You can't do that.", ephemeral=True)
-                            return
-                        lock_time_unix = int(datetime.now(timezone.utc).timestamp())
-                        embed.title = "Training Locked"
-                        embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
-                        embed.set_field_at(1, name="Session Status", value="Training Locked", inline=False)
-                        embed.color = 0xED4245
-                        await msg.edit(embed=embed, view=None)
-                        await interaction.followup.send(f"{emoji} | Training has been locked.", ephemeral=True)
-
-                    lock_button.callback = lock_training_callback
-                    action_buttons.add_item(lock_button)
-
-                    # End Training button
-                    end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
-                    async def end_training_callback(interaction):
-                        await interaction.response.defer()
-                        if not await self.is_allowed_role()(ctx):
-                            await interaction.followup.send("You can't do that.", ephemeral=True)
-                            return
-                        await self.end_training_callback(interaction, msg.id)
-
-                    end_button.callback = end_training_callback
-                    action_buttons.add_item(end_button)
-
-                    await msg.edit(view=action_buttons)
                     await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+
+    async def lock_training_callback(self, interaction, message_id):
+        ctx = await self.bot.get_context(interaction.message)
+
+        if ctx.guild.id not in self.training_start_times:
+            await interaction.response.send_message("No active training found for this server.", ephemeral=True)
+            return
+
+        training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        channel = self.bot.get_channel(training_channel_id)
+        if not channel:
+            await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
+            return
+
+        try:
+            msg = await channel.fetch_message(message_id)
+            if msg.embeds and msg.author.id == self.bot.user.id:
+                embed = msg.embeds[0]
+                if embed.title == "Training":
+                    lock_time_unix = int(datetime.now(timezone.utc).timestamp())
+                    embed.title = "Training Locked"
+                    embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
+                    embed.set_field_at(1, name="Session Status", value="Training Locked", inline=False)
+                    embed.color = 0xED4245
+
+                    # Disable buttons
+                    for item in interaction.message.components[0].children:
+                        item.disabled = True
+
+                    await msg.edit(embed=embed, view=interaction.message.components[0])
+                    await interaction.followup.send(f"{emoji} | Training has been locked.", ephemeral=True)
+                else:
+                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+        except Exception as e:
+            await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
+            await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
@@ -175,19 +196,20 @@ class TrainingManager(commands.Cog):
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 10 minutes
                 embed = msg.embeds[0]
 
                 if embed.title == "Training":
                     host_field = embed.fields[0].value
                     embed.title = "Training Ended"
-                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending! Deleting this message <t:{delete_time_unix}:R>"
+                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
                     embed.color = 0xED4245
-                    await msg.edit(embed=embed)
-                    await interaction.response.send_message("Training has ended!", ephemeral=True)
 
-                    await asyncio.sleep(600)  # Wait 10 minutes before deleting
-                    await msg.delete()
+                    # Disable buttons
+                    for item in interaction.message.components[0].children:
+                        item.disabled = True
+
+                    await msg.edit(embed=embed, view=interaction.message.components[0])
+                    await interaction.response.send_message("Training has ended!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
