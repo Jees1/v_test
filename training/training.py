@@ -142,10 +142,12 @@ class TrainingManager(commands.Cog):
                         if button.label in ["Lock Training", "End Training"]:
                             button.disabled = False
     
-                    # Create a new view with the updated buttons
+                    # Create a new view and add the updated buttons
                     new_view = discord.ui.View()
-                    for item in interaction.message.components[0].children:
-                        new_view.add_item(item)  # Add all items from the original view
+                    for button in interaction.message.components[0].children:
+                        # Ensure we are adding buttons to the new view
+                        if isinstance(button, discord.ui.Button):
+                            new_view.add_item(button)
     
                     await msg.edit(embed=embed, view=new_view)  # Edit the message with the new view
                     await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
