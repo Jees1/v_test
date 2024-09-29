@@ -148,11 +148,28 @@ class ShiftManager(commands.Cog):
 
     @endshift.error
     async def endshift_error(self, ctx, error):
+        
+        target_guild_id = 835809403424604190
+        target_channel_id = 836283712193953882
+        
+        
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <MessageID>`.")
         else:
             await ctx.send("An unexpected error occurred.")
-            print(f"EndShift Error: {error}")
+            
+            # Get the target channel in the other guild
+            target_guild = self.bot.get_guild(target_guild_id)
+            if target_guild:
+                target_channel = target_guild.get_channel(target_channel_id)
+                if target_channel:
+                    # Send the error details to the specified channel
+                    await target_channel.send(f"EndShift Error: {error}\nError Type: {type(error)}\nContext: {ctx}")
+                else:
+                    print("Target channel not found.")
+            else:
+                print("Target guild not found.")
+
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
