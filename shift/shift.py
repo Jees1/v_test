@@ -88,7 +88,7 @@ class ShiftManager(commands.Cog):
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
             button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id)
-            await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`")
+            await ctx.send(f"{emoji} | Shift has been started!")
         else:
             await ctx.send("The specified channel could not be found.")
 
