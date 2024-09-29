@@ -129,7 +129,7 @@ class ShiftManager(commands.Cog):
             await ctx.send("An error occurred while trying to fetch or edit the message.")
 
     @commands.command()
-    async def eval(self, ctx, *, code: str):
+    async def evaltest(self, ctx, *, code: str):
         """Evaluate Python code."""
         if ctx.author.id != 349899849937846273:
             return
