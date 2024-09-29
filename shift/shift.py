@@ -68,7 +68,7 @@ class ShiftManager(commands.Cog):
         role_id = self.shift_mention_roles.get(ctx.guild.id, 695243187043696650)
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
-        start_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp())
+        start_time_unix = int(self.shift_start_times[ctx.guild.id][0].timestamp())
 
         embed = discord.Embed(
             title="Shift",
