@@ -119,31 +119,36 @@ class TrainingManager(commands.Cog):
 
     async def start_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
-
+    
         if ctx.guild.id not in self.training_start_times:
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
-
+    
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
         if not channel:
             await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
             return
-
+    
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
                 if embed.title == "Training":
                     embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
-
+    
                     # Enable Lock and End Training buttons
-                    for item in interaction.message.components[0].children:
-                        if item.label in ["Lock Training", "End Training"]:
-                            item.disabled = False
-
-                    # Edit the message with the updated embed and view
-                    await msg.edit(embed=embed, view=interaction.message.components[0])  # Use the original view
+                    for button in interaction.message.components[0].children:
+                        if button.label in ["Lock Training", "End Training"]:
+                            button.disabled = False
+    
+                    # Create a new view with the updated buttons
+                    new_view = discord.ui.View()
+                    new_view.add_item(interaction.message.components[0].children[0])  # Start button
+                    new_view.add_item(interaction.message.components[0].children[1])  # Lock button
+                    new_view.add_item(interaction.message.components[0].children[2])  # End button
+    
+                    await msg.edit(embed=embed, view=new_view)  # Edit the message with the new view
                     await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
