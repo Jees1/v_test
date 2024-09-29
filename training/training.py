@@ -188,7 +188,7 @@ class TrainingManager(commands.Cog):
                             color=0xED4245
                         )
                 
-                        # Copy over the footer and other necessary fields if needed
+                        # Copy over necessary fields
                         new_embed.set_footer(text=embed.footer.text)
                         new_embed.add_field(name='Host', value=embed.fields[0].value, inline=False)
                         new_embed.add_field(name='Session Status', value='Training has been locked!', inline=False)
@@ -196,7 +196,7 @@ class TrainingManager(commands.Cog):
                         new_embed.add_field(name='Training Center Link', value=embed.fields[3].value, inline=False)
                 
                         # Log before editing the message
-                        await self.send_error_log(f"Editing message with new embed: {new_embed.to_dict()}", ctx, "Editing message with new embed")
+                        await self.send_error_log("Editing message with new embed", ctx, "Editing message with new embed")
                         
                         try:
                             await msg.edit(embed=new_embed)
@@ -204,6 +204,7 @@ class TrainingManager(commands.Cog):
                         except Exception as e:
                             await self.send_error_log(e, ctx, "Error editing embed during Lock Training")
                             await interaction.response.send_message("An error occurred while trying to update the training status.", ephemeral=True)
+
 
     
                 action_select.callback = action_callback
