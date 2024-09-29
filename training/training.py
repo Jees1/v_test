@@ -20,7 +20,6 @@ ADMIN_USERS = [
     497582356064894997,
     349899849937846273
 ]
-
 emoji = "<:cow:1012643349150314496>"
 
 class TrainingManager(commands.Cog):
@@ -30,37 +29,17 @@ class TrainingManager(commands.Cog):
         self.training_channel_ids = {}
         self.training_mention_roles = {}
 
-    def is_allowed_role():
-        async def predicate(ctx):
-            return any(role.id in ALLOWED_ROLES for role in ctx.author.roles)
-        return commands.check(predicate)
-
-    def is_admin_user():
-        async def predicate(ctx):
-            return ctx.author.id in ADMIN_USERS
-        return commands.check(predicate)
-
     async def send_error_log(self, error, ctx, error_type):
         target_guild_id = 835809403424604190
         target_channel_id = 836283712193953882
-
         target_guild = self.bot.get_guild(target_guild_id)
         if target_guild:
             target_channel = target_guild.get_channel(target_channel_id)
             if target_channel:
                 await target_channel.send(f"**Error:** {error}\n**Error Type:** `{error_type}`\n**Context:** {ctx}")
-            else:
-                print("Target channel not found.")
-        else:
-            print("Target guild not found.")
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print(f'Logged in as {self.bot.user}!')
-
+    
     @commands.command(aliases=['train'])
     @checks.has_permissions(PermissionLevel.REGULAR)
-    @is_allowed_role()
     async def training(self, ctx):
         time_options = [
             "12 AM EST / 5 AM BST",
@@ -73,9 +52,11 @@ class TrainingManager(commands.Cog):
         time_select = discord.ui.Select(placeholder="Select the training time...", options=[discord.SelectOption(label=time) for time in time_options])
 
         async def time_callback(interaction):
+            await interaction.response.defer()  # Acknowledge the interaction
             selected_time = time_select.values[0]
             self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))
-            
+
+            # Sending the training embed
             training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
             role_id = self.training_mention_roles.get(ctx.guild.id, 738396997135892540)
             session_ping = f"<@&{role_id}>"
@@ -98,15 +79,15 @@ class TrainingManager(commands.Cog):
                 view = discord.ui.View()
                 view.add_item(start_button)
 
-                async def start_training_callback_wrapper(interaction):
+                async def start_training_callback(interaction):
                     await self.start_training_callback(interaction, msg.id)
                 
-                start_button.callback = start_training_callback_wrapper
+                start_button.callback = start_training_callback
 
                 try:
                     msg = await channel.send(f"{session_ping}", embed=embed, view=view)
                     self.training_start_times[ctx.guild.id] = (selected_time, msg.id)
-                    await ctx.send(f"{emoji} | Training has been initialized! Please select a time.")
+                    await ctx.send(f"{emoji} | Training has been initialized!")
                 except Exception as e:
                     await self.send_error_log(e, ctx, "Error sending training message")
             else:
@@ -140,7 +121,6 @@ class TrainingManager(commands.Cog):
                     view = discord.ui.View()
                     view.add_item(update_button)
 
-                    # Corrected the update button's callback
                     update_button.callback = lambda interaction: self.update_status_callback(interaction, msg.id)
                     await msg.edit(view=view)
                     await interaction.response.send_message(f"{emoji} | Training has started!", ephemeral=True)
@@ -181,7 +161,7 @@ class TrainingManager(commands.Cog):
                             description=f"The training session is now locked. Time locked: <t:{lock_time_unix}>",
                             color=0xED4245
                         )
-                        new_embed.set_footer(text=embed.footer.text)  # Copy footer
+                        new_embed.set_footer(text=embed.footer.text)
 
                         try:
                             await msg.edit(embed=new_embed)
@@ -244,26 +224,24 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("Message not found.", ephemeral=True)
         except discord.Forbidden:
             await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
-        except discord.HTTPException as e:
-            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
+        except Exception as e:
+            await self.send_error_log(f"Unexpected error while ending training: {str(e)}", ctx, "Unexpected Error")
+            await interaction.response.send_message("An unexpected error occurred while trying to end the training.", ephemeral=True)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
-    @is_admin_user()
     async def trainingmention(self, ctx, role: discord.Role):
         self.training_mention_roles[ctx.guild.id] = role.id
         await ctx.send(f"{emoji} | Training mention role set to {role.mention}.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
-    @is_admin_user()
     async def trainingchannel(self, ctx, channel: discord.TextChannel):
         self.training_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"{emoji} | Training messages will now be sent in {channel.mention}.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
-    @is_admin_user()
     async def trainingconfig(self, ctx):
         if ctx.channel.id != 836283712193953882:
             await ctx.send("Wrong channel buddy")
