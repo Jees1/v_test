@@ -55,16 +55,15 @@ class TrainingManager(commands.Cog):
         else:
             print("Target guild not found.")
 
-
     @commands.Cog.listener()
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
 
-    @commands.command(aliases=['train'])
+    @commands.command(aliases=['s'])
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def training(self, ctx):
-        self.training_start_times[ctx.guild.id] = datetime.now(timezone.utc)
+        self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc))
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
         session_ping = f"<@&{role_id}>"
@@ -73,12 +72,12 @@ class TrainingManager(commands.Cog):
 
         embed = discord.Embed(
             title="Training",
-            description=f"A training is being hosted at the training center! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend, while Senior Staff and above may assist.",
+            description=f"A training is being at the Training Center! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
             color=self.bot.main_color
         )
         embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
-        embed.add_field(name="Training Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
+        embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
         embed.set_footer(text=f"Vinns Sessions")
 
         channel = self.bot.get_channel(training_channel_id)
@@ -103,7 +102,7 @@ class TrainingManager(commands.Cog):
         self.training_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"{emoji} | Training messages will now be sent in {channel.mention}.")
 
-    @commands.command(aliases=['et'])
+    @commands.command(aliases=['es'])
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def endtraining(self, ctx, message_id: int):
@@ -122,6 +121,7 @@ class TrainingManager(commands.Cog):
             if msg.embeds and msg.author.id == 738395338393518222:
                 delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
                 embed = msg.embeds[0]
+                
                 if embed.title == "Training":
                     host_field = embed.fields[0].value
                     embed.title = "Training Ended"
@@ -167,17 +167,7 @@ class TrainingManager(commands.Cog):
         await ctx.send(config_info)
     
 
-    @endtraining.error
-    async def endtraining_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please provide the message ID for the training to end. Usage: `-endtraining <msgID>`.") 
-        elif isinstance(error, commands.BadArgument):
-            await ctx.send("Invalid message ID provided.")
-        else:
-            await ctx.send("An unexpected error occurred.")
-            print(f"Unexpected error in endtraining command: {error}")
-            await self.send_error_log(error, ctx, "endtraining_error")
-    
+
     @training.error
     async def training_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
@@ -185,20 +175,29 @@ class TrainingManager(commands.Cog):
         elif isinstance(error, commands.MissingRole):
             await ctx.send("You don't have the required role to use this command.")
         else:
-            await ctx.send("An unexpected error occurred.")
-            print(f"Unexpected error in training command: {error}")
+            # await ctx.send("An unexpected error occurred."),
             await self.send_error_log(error, ctx, "training_error")
-    
+            print(f"Error: {error}")
+
     @trainingmention.error
     @trainingchannel.error
     async def command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to use this command.")
         else:
-            await ctx.send("An unexpected error occurred.")
-            print(f"Unexpected error in command: {error}")
+            # await ctx.send("An unexpected error occurred.")
             await self.send_error_log(error, ctx, "command_error")
-    
+            print(f"Error: {error}")
+
+    @endtraining.error
+    async def endtraining_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please provide the message ID for the training to end. Usage: `-endtraining <msgID>`.")
+        else:
+            # await ctx.send("An unexpected error occurred.")
+            await self.send_error_log(error, ctx, "endtraining_error")
+            print(f"Error: {error}")
+
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
