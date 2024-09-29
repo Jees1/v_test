@@ -168,6 +168,12 @@ class TrainingManager(commands.Cog):
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
     
+                # Check embed type
+                if not isinstance(embed, discord.Embed):
+                    await self.send_error_log("Embed is not of type discord.Embed", ctx, "Invalid embed type")
+                    await interaction.response.send_message("The message does not contain a valid embed.", ephemeral=True)
+                    return
+    
                 options = ["End Training", "Lock Training"]
                 action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
     
@@ -180,12 +186,13 @@ class TrainingManager(commands.Cog):
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
-                        
+    
+                        # Attempt to edit the message with the updated embed
                         try:
                             await msg.edit(embed=embed)  # Ensure embed is the correct object
                             await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
                         except Exception as e:
-                            await self.send_error_log(e, ctx, "Error editing embed")
+                            await self.send_error_log(e, ctx, "Error editing embed during Lock Training")
                             await interaction.response.send_message("An error occurred while trying to update the training status.", ephemeral=True)
     
                 action_select.callback = action_callback
