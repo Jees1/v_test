@@ -247,7 +247,7 @@ class TrainingManager(commands.Cog):
             await msg.edit(embed=embed, view=new_view)
             await interaction.followup.send("Training has ended!", ephemeral=True)
             await self.send_error_log("Training ended successfully", ctx, "Debug")
-         else:
+        else:
             await interaction.followup.send("The message provided isn't valid.", ephemeral=True)
             await self.send_error_log("Invalid message", ctx, "Debug")
     except Exception as e:
