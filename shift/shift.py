@@ -104,7 +104,7 @@ class ShiftManager(commands.Cog):
             msg = await channel.fetch_message(message_id)
             print(f"Fetched message: {msg.content}")  # Debugging line
             if msg.embeds:
-                delete_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp() + 900) # 900 seconds = 15 minutes
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 900) # 900 seconds = 15 minutes
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
                 embed.title = "Shift Ended"
