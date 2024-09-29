@@ -71,75 +71,87 @@ class ShiftManager(commands.Cog):
 
         embed = discord.Embed(
             title="Shift",
-            description=f"A shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
+            description="A shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
             color=self.bot.main_color
         )
         embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
-        embed.set_footer(text=f"Vinns Sessions")
+        embed.set_footer(text="Vinns Sessions")
 
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
             msg = await channel.send(f"{session_ping}", embed=embed)
-            self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
 
-            # Confirmation message with button
-            button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
+            # Create a button to end the shift
+            button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.red)
+
+            async def button_callback(interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("You are not authorized to end this shift.", ephemeral=True)
+                    return
+
+                await self.end_shift(msg, host_mention)
+
+                # Notify the user and disable the button
+                await interaction.response.send_message(f"{emoji} | Successfully ended the shift!", ephemeral=True)
+
+                # Disable the button
+                button.disabled = True
+                await msg.edit(view=view)
+
+            button.callback = button_callback
             view = discord.ui.View()
             view.add_item(button)
 
-            confirmation_msg = await ctx.send(f"{emoji} | Shift has been started!", view=view) # \n\n`msgID: {msg.id}`
+            await msg.edit(view=view)
+            self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
 
-            button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id, confirmation_msg)
+            await ctx.send(f"{emoji} | Shift has been started!")
         else:
             await ctx.send("The specified channel could not be found.")
 
-    async def end_shift_callback(self, interaction, message_id, confirmation_msg):
-        ctx = await self.bot.get_context(interaction.message)
+    async def end_shift(self, msg, host_mention):
+        delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 10 minutes
+        embed = msg.embeds[0]
 
+        embed.title = "Shift Ended"
+        embed.description = f"The shift hosted by {host_mention} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
+        embed.color = 0xED4245
+        embed.clear_fields()
+        await msg.edit(embed=embed)
+
+        # Wait for 10 minutes before deleting the message
+        await asyncio.sleep(600)
+        await msg.delete()
+
+    @commands.command()
+    @checks.has_permissions(PermissionLevel.REGULAR)
+    @is_allowed_role()
+    async def endshift(self, ctx, message_id: int):
         if ctx.guild.id not in self.shift_start_times:
-            await interaction.response.send_message("No active shift found for this server.", ephemeral=True)
+            await ctx.send("No active shift found for this server.")
             return
     
         shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(shift_channel_id)
         if not channel:
-            await interaction.response.send_message("The shift channel could not be found.", ephemeral=True)
+            await ctx.send("The shift channel could not be found.")
             return
     
         try:
             msg = await channel.fetch_message(message_id)
-            if msg.embeds and msg.author.id == 738395338393518222:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
-                embed = msg.embeds[0]
-                
-                if embed.title == "Shift":
-                    host_field = embed.fields[0].value
-                    embed.title = "Shift Ended"
-                    embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
-                    embed.color = 0xED4245
-                    embed.clear_fields()
-                    await msg.edit(embed=embed)
-
-                    # Edit the confirmation message
-                    await confirmation_msg.edit(content=f"{emoji} | Successfully ended the shift!", view=None)
-
-                    await interaction.response.send_message("Shift has ended.", ephemeral=True)
-
-                    # Wait for 10 minutes before deleting the message
-                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                    await msg.delete()  # Delete the edited message after 10 minutes
-                else:
-                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+            if msg.embeds and msg.author.id == self.bot.user.id:
+                await self.end_shift(msg, ctx.author.mention)
+                await ctx.send(f"{emoji} | Shift with message ID `{message_id}` has ended.")
             else:
-                await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
+                await ctx.send("The message provided isn't valid.")
         except discord.NotFound:
-            await interaction.response.send_message("Message not found.", ephemeral=True)
+            await ctx.send("Message not found.")
         except discord.Forbidden:
-            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+            await ctx.send("I don't have permission to access the message.")
         except discord.HTTPException as e:
-            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
+            await ctx.send("An error occurred while trying to fetch or edit the message.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -159,12 +171,10 @@ class ShiftManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def shiftconfig(self, ctx):
-        # Restrict command usage to specific channel
         if ctx.channel.id != 836283712193953882:
             await ctx.send("Wrong channel buddy")
             return
     
-        # Create a string representation of the current configuration
         config_info = f"""```yaml
     Shift Start Times: {self.shift_start_times}
     Shift Channel IDs: {self.shift_channel_ids}
@@ -194,6 +204,13 @@ class ShiftManager(commands.Cog):
             await self.send_error_log(error, ctx, "command_error")
             print(f"Error: {error}")
 
-#bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
+    @endshift.error
+    async def endshift_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <msgID>`.")    
+        else:
+            await self.send_error_log(error, ctx, "endshift_error")
+            print(f"Error: {error}")
+
 async def setup(bot):
     await bot.add_cog(ShiftManager(bot))
