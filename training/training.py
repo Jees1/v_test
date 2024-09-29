@@ -159,6 +159,7 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("An error occurred. Please try again.", ephemeral=True)
 
 
+
     
     async def lock_training_callback(self, interaction):
         ctx = await self.bot.get_context(interaction.message)
@@ -204,7 +205,6 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
 
-  
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
     
@@ -240,7 +240,7 @@ class TrainingManager(commands.Cog):
         except Exception as e:
             await self.send_error_log(f"Unexpected error in end_training_callback: {str(e)}", ctx, "End Training Error")
             await interaction.response.send_message("An unexpected error occurred. Please try again later.", ephemeral=True)
-
+    
 
 
     @commands.command()
