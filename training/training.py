@@ -168,7 +168,10 @@ class TrainingManager(commands.Cog):
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
     
-                # Check embed type
+                # Log embed type for debugging
+                await self.send_error_log(f"Embed type: {type(embed)}", ctx, "Debugging embed type")
+                
+                # Check if embed is indeed a discord.Embed
                 if not isinstance(embed, discord.Embed):
                     await self.send_error_log("Embed is not of type discord.Embed", ctx, "Invalid embed type")
                     await interaction.response.send_message("The message does not contain a valid embed.", ephemeral=True)
@@ -186,6 +189,9 @@ class TrainingManager(commands.Cog):
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
+                        
+                        # Debug logging before editing the message
+                        await self.send_error_log(f"Attempting to edit embed: {embed.to_dict()}", ctx, "Editing embed")
     
                         # Attempt to edit the message with the updated embed
                         try:
