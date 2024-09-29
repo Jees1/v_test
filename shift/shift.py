@@ -90,7 +90,6 @@ class ShiftManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def endshift(self, ctx, message_id: int):
-        print(f"Received message ID: {message_id}")  # Debugging line
         if ctx.guild.id not in self.shift_start_times:
             await ctx.send("No active shift found for this server.")
             return
@@ -103,7 +102,6 @@ class ShiftManager(commands.Cog):
     
         try:
             msg = await channel.fetch_message(message_id)
-            print(f"Fetched message: {msg.content}")  # Debugging line
             if msg.embeds:
                 delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
                 embed = msg.embeds[0]
@@ -122,12 +120,10 @@ class ShiftManager(commands.Cog):
                 await ctx.send("The message does not contain an embed.")
         except discord.NotFound:
             await ctx.send("Message not found.")
-            print("Message not found in channel.")  # Debugging line
         except discord.Forbidden:
             await ctx.send("I don't have permission to access the message.")
         except discord.HTTPException as e:
             await ctx.send("An error occurred while trying to fetch or edit the message.")
-            print(f"HTTP Exception: {e}")  # Debugging line
 
     @shift.error
     async def shift_error(self, ctx, error):
