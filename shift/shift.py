@@ -89,6 +89,7 @@ class ShiftManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def endshift(self, ctx, message_id: int):
+        print(f"Received message ID: {message_id}")  # Debugging line
         if ctx.guild.id not in self.shift_start_times:
             await ctx.send("No active shift found for this server.")
             return
@@ -101,28 +102,19 @@ class ShiftManager(commands.Cog):
     
         try:
             msg = await channel.fetch_message(message_id)
+            print(f"Fetched message: {msg.content}")  # Debugging line
             if msg.embeds:
-                delete_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp() + 900) # 900 seconds = 15 minutes
-                embed = msg.embeds[0]
-                host_field = embed.fields[0].value
-                embed.title = "Shift Ended"
-                embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message in <t:{delete_time_unix}:R>"
-                embed.clear_fields()
-                await msg.edit(embed=embed)
-                await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID {message_id} has been ended.")
-    
-                # Wait for 15 minutes before deleting the message
-                await asyncio.sleep(900)  # 900 seconds = 15 minutes
-                await msg.delete()  # Delete the edited message after 15 minutes
-                
+                # (Rest of your existing code...)
             else:
                 await ctx.send("The message does not contain an embed.")
         except discord.NotFound:
             await ctx.send("Message not found.")
+            print("Message not found in channel.")  # Debugging line
         except discord.Forbidden:
-            await ctx.send("I don't have permissions to access the message.")
-        except discord.HTTPException:
+            await ctx.send("I don't have permission to access the message.")
+        except discord.HTTPException as e:
             await ctx.send("An error occurred while trying to fetch or edit the message.")
+            print(f"HTTP Exception: {e}")  # Debugging line
 
     @shift.error
     async def shift_error(self, ctx, error):
@@ -145,8 +137,11 @@ class ShiftManager(commands.Cog):
 
     @endshift.error
     async def endshift_error(self, ctx, error):
-        await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <MessageID>`.")
-        print(f"Error: {error}")
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <MessageID>`.")
+        else:
+            await ctx.send("An unexpected error occurred.")
+            print(f"EndShift Error: {error}")
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
