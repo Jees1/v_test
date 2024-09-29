@@ -73,11 +73,11 @@ class TrainingManager(commands.Cog):
         time_select = discord.ui.Select(placeholder="Select the training time...", options=[discord.SelectOption(label=time) for time in time_options])
 
         async def time_callback(interaction):
-            selected_time = time_select.values[0]  
-            self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))  # Store the selected time
+            selected_time = time_select.values[0]
+            self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))
             
             training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
-            role_id = self.training_mention_roles.get(ctx.guild.id, 738396997135892540) # 695243187043696650
+            role_id = self.training_mention_roles.get(ctx.guild.id, 738396997135892540)
             session_ping = f"<@&{role_id}>"
             host_mention = ctx.author.mention
 
@@ -88,7 +88,7 @@ class TrainingManager(commands.Cog):
             )
             embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
             embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
-            embed.add_field(name="Scheduled Time", value=selected_time, inline=False)  # Use the selected time
+            embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
             embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
             embed.set_footer(text=f"Started by: {interaction.user.name}")
 
@@ -103,10 +103,9 @@ class TrainingManager(commands.Cog):
                 
                 start_button.callback = start_training_callback_wrapper
 
-                
                 try:
                     msg = await channel.send(f"{session_ping}", embed=embed, view=view)
-                    self.training_start_times[ctx.guild.id] = (selected_time, msg.id)  # Store message ID
+                    self.training_start_times[ctx.guild.id] = (selected_time, msg.id)
                     await ctx.send(f"{emoji} | Training has been initialized! Please select a time.")
                 except Exception as e:
                     await self.send_error_log(e, ctx, "Error sending training message")
@@ -141,7 +140,7 @@ class TrainingManager(commands.Cog):
                     view = discord.ui.View()
                     view.add_item(update_button)
 
-                    # Ensure the update button calls the right method
+                    # Corrected the update button's callback
                     update_button.callback = lambda interaction: self.update_status_callback(interaction, msg.id)
                     await msg.edit(view=view)
                     await interaction.response.send_message(f"{emoji} | Training has started!", ephemeral=True)
@@ -149,70 +148,53 @@ class TrainingManager(commands.Cog):
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
-#################################
+
     async def update_status_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
-    
+
         if ctx.guild.id not in self.training_start_times:
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
-    
+
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
         if not channel:
             await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
             return
-    
+
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
-    
-                # Log the embed to check its structure
-                #await self.send_error_log(f"Embed before modification: {embed.to_dict()}", ctx, "Debugging before modification")
-    
+
                 options = ["End Training", "Lock Training"]
                 action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
-    
+
                 async def action_callback(interaction):
                     selected_action = action_select.values[0]
                     if selected_action == "End Training":
                         await self.end_training_callback(interaction, msg.id)
                     elif selected_action == "Lock Training":
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
-    
-                        # Log before modifying the embed
-                        #await self.send_error_log(f"Before Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
-    
                         new_embed = discord.Embed(
                             title="Training Locked",
                             description=f"The training session is now locked. Time locked: <t:{lock_time_unix}>",
                             color=0xED4245
                         )
                         new_embed.set_footer(text=embed.footer.text)  # Copy footer
-    
-                        # Log after creating the new embed
-                        #await self.send_error_log(f"New embed for Lock Training: {new_embed.to_dict()}", ctx, "New Lock Embed")
-    
+
                         try:
-                            await msg.edit(embed=new_embed)  # Edit with the new embed
+                            await msg.edit(embed=new_embed)
                             await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
                         except Exception as e:
                             await self.send_error_log(f"Error editing embed during Lock Training: {str(e)}", ctx, "Error Editing Embed")
                             await interaction.response.send_message("An error occurred while trying to update the training status.", ephemeral=True)
-    
+
                 action_select.callback = action_callback
                 view = discord.ui.View()
                 view.add_item(action_select)
-    
-                # Log before sending the action selection message
-                await self.send_error_log("Preparing to send action selection.", ctx, "Sending Action Selection")
-    
+
                 await interaction.response.send_message("Select an action:", view=view, ephemeral=True)
-    
-                # Log after sending the action selection message
-                await self.send_error_log("Action selection sent.", ctx, "Action Selection Sent")
-    
             else:
                 await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
         except discord.NotFound:
@@ -223,10 +205,6 @@ class TrainingManager(commands.Cog):
             await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
-
-###########################
-
-    
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
 
@@ -256,7 +234,6 @@ class TrainingManager(commands.Cog):
                     await msg.edit(embed=embed, view=None)
                     await interaction.response.send_message(f"{emoji} | Training has ended.", ephemeral=True)
 
-                    # Wait for 10 minutes before deleting the message
                     await asyncio.sleep(600)  # 600 seconds = 10 minutes
                     await msg.delete()
                 else:
