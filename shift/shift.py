@@ -1,4 +1,3 @@
-
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone
@@ -63,7 +62,7 @@ class ShiftManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def shift(self, ctx):
-        self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc))
+        self.shift_start_times[ctx.guild.id] = datetime.now(timezone.utc)
         shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
         role_id = self.shift_mention_roles.get(ctx.guild.id, 695243187043696650)
         session_ping = f"<@&{role_id}>"
@@ -82,11 +81,58 @@ class ShiftManager(commands.Cog):
 
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
-            msg = await channel.send(f"{session_ping}", embed=embed)
+            button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
+            view = discord.ui.View()
+            view.add_item(button)
+
+            msg = await channel.send(f"{session_ping}", embed=embed, view=view)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
+            button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id)
             await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`")
         else:
             await ctx.send("The specified channel could not be found.")
+
+    async def end_shift_callback(self, interaction, message_id):
+        ctx = await self.bot.get_context(interaction.message)
+
+        if ctx.guild.id not in self.shift_start_times:
+            await interaction.response.send_message("No active shift found for this server.", ephemeral=True)
+            return
+    
+        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        channel = self.bot.get_channel(shift_channel_id)
+        if not channel:
+            await interaction.response.send_message("The shift channel could not be found.", ephemeral=True)
+            return
+    
+        try:
+            msg = await channel.fetch_message(message_id)
+            if msg.embeds and msg.author.id == 738395338393518222:
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
+                embed = msg.embeds[0]
+                
+                if embed.title == "Shift":
+                    host_field = embed.fields[0].value
+                    embed.title = "Shift Ended"
+                    embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
+                    embed.color = 0xED4245
+                    embed.clear_fields()
+                    await msg.edit(embed=embed)
+                    await interaction.response.send_message(f"{emoji} | Shift has ended.", ephemeral=True)
+        
+                    # Wait for 10 minutes before deleting the message
+                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
+                    await msg.delete()  # Delete the edited message after 10 minutes
+                else:
+                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+            else:
+                await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
+        except discord.NotFound:
+            await interaction.response.send_message("Message not found.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+        except discord.HTTPException as e:
+            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -101,50 +147,6 @@ class ShiftManager(commands.Cog):
     async def shiftchannel(self, ctx, channel: discord.TextChannel):
         self.shift_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"{emoji} | Shift messages will now be sent in {channel.mention}.")
-
-    @commands.command(aliases=['es'])
-    @checks.has_permissions(PermissionLevel.REGULAR)
-    @is_allowed_role()
-    async def endshift(self, ctx, message_id: int):
-        if ctx.guild.id not in self.shift_start_times:
-            await ctx.send("No active shift found for this server.")
-            return
-    
-        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
-        channel = self.bot.get_channel(shift_channel_id)
-        if not channel:
-            await ctx.send("The shift channel could not be found.")
-            return
-    
-        try:
-            msg = await channel.fetch_message(message_id)
-            if msg.embeds and msg.author.id == 738395338393518222:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
-                embed = msg.embeds[0]
-                
-                if embed.title == "Shift":
-                    host_field = embed.fields[0].value
-                    embed.title = "Shift Ended"
-                    embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
-                    embed.color = 0xED4245
-                    embed.clear_fields()
-                    await msg.edit(embed=embed)
-                    await ctx.send(f"{emoji} | Shift with message ID `{message_id}` has ended.")
-        
-                    # Wait for 15 minutes before deleting the message
-                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                    await msg.delete()  # Delete the edited message after 10 minutes
-                else:
-                    await ctx.send("The message provided isn't valid.")
-            else:
-                await ctx.send("The message provided does not contain an embed or isn't valid.")
-        except discord.NotFound:
-            await ctx.send("Message not found.")
-        except discord.Forbidden:
-            await ctx.send("I don't have permission to access the message.")
-        except discord.HTTPException as e:
-            await ctx.send("An error occurred while trying to fetch or edit the message.")
-
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -165,8 +167,6 @@ class ShiftManager(commands.Cog):
     ```"""
     
         await ctx.send(config_info)
-    
-
 
     @shift.error
     async def shift_error(self, ctx, error):
@@ -175,7 +175,6 @@ class ShiftManager(commands.Cog):
         elif isinstance(error, commands.MissingRole):
             await ctx.send("You don't have the required role to use this command.")
         else:
-            # await ctx.send("An unexpected error occurred."),
             await self.send_error_log(error, ctx, "shift_error")
             print(f"Error: {error}")
 
@@ -185,19 +184,8 @@ class ShiftManager(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to use this command.")
         else:
-            # await ctx.send("An unexpected error occurred.")
             await self.send_error_log(error, ctx, "command_error")
             print(f"Error: {error}")
-
-    @endshift.error
-    async def endshift_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <msgID>`.")
-        else:
-            # await ctx.send("An unexpected error occurred.")
-            await self.send_error_log(error, ctx, "endshift_error")
-            print(f"Error: {error}")
-
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
