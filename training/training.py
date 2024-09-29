@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone
-import asyncio
 
 ALLOWED_ROLES = [
     796317014209462332,
@@ -92,7 +91,7 @@ class TrainingManager(commands.Cog):
                 # Lock Training button (initially disabled)
                 lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
                 async def lock_training_callback(interaction):
-                    await self.lock_training_callback(interaction, msg.id)
+                    await self.lock_training_callback(interaction)
 
                 lock_button.callback = lock_training_callback
                 view.add_item(lock_button)
@@ -140,7 +139,7 @@ class TrainingManager(commands.Cog):
     
                 # Assign the callbacks directly
                 lock_button.callback = self.lock_training_callback
-                end_button.callback = self.end_training_callback  # Direct assignment
+                end_button.callback = lambda interaction: self.end_training_callback(interaction, msg.id)  # Correct callback assignment
     
                 # Create a new view and add buttons
                 action_buttons = discord.ui.View()
@@ -157,8 +156,6 @@ class TrainingManager(commands.Cog):
             await self.send_error_log(f"Error in start_training_callback: {str(e)}", ctx, "Start Training Error")
             await interaction.response.send_message("An error occurred. Please try again.", ephemeral=True)
 
-
-    
     async def lock_training_callback(self, interaction):
         ctx = await self.bot.get_context(interaction.message)
     
@@ -203,44 +200,45 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
     async def end_training_callback(self, interaction, message_id):
+        print("End Training Callback Triggered")  # Debug message
         ctx = await self.bot.get_context(interaction.message)
-    
+
         await self.send_error_log("Starting end_training_callback", ctx, "Debug")
-    
+
         # Check if there is active training
         if ctx.guild.id not in self.training_start_times:
             await self.send_error_log("No active training found", ctx, "Debug")
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
-    
+
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
-    
+
         if not channel:
             await self.send_error_log("Training channel not found", ctx, "Debug")
             await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
             return
-    
+
         try:
             await interaction.response.defer()  # Acknowledge the interaction
             await self.send_error_log("Fetching message", ctx, "Debug")
-    
+
             msg = await channel.fetch_message(message_id)
-    
+
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
-    
+
                 embed.title = "Training Ended"
                 embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
                 embed.color = 0xED4245
-                
+
                 # Create a new view and disable all buttons
                 new_view = discord.ui.View()
                 new_view.add_item(discord.ui.Button(label="Start Training", disabled=True))
                 new_view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
                 new_view.add_item(discord.ui.Button(label="End Training", disabled=True))
-    
+
                 await msg.edit(embed=embed, view=new_view)
                 await interaction.followup.send("Training has ended!", ephemeral=True)
                 await self.send_error_log("Training ended successfully", ctx, "Debug")
@@ -250,7 +248,6 @@ class TrainingManager(commands.Cog):
         except Exception as e:
             await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "End Training Error")
             await interaction.followup.send("An unexpected error occurred. Please try again later.", ephemeral=True)
-
 
     @commands.command()
     @is_admin_user()
