@@ -73,7 +73,7 @@ class TrainingManager(commands.Cog):
 
         embed = discord.Embed(
             title="Training",
-            description=f"A training is currently being hosted at the training center!",
+            description=f"A training is being hosted at the training center! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend, while Senior Staff and above may assist.",
             color=self.bot.main_color
         )
         embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
