@@ -73,14 +73,14 @@ class ShiftManager(commands.Cog):
             await ctx.send("The specified channel could not be found.")
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.REGULAR)
+    @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def shiftmention(self, ctx, role: discord.Role):
         self.shift_mention_roles[ctx.guild.id] = role.id
         await ctx.send(f"<:cow:1012643349150314496> | Shift mention role set to {role.mention}.")
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.REGULAR)
+    @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def shiftchannel(self, ctx, channel: discord.TextChannel):
         self.shift_channel_ids[ctx.guild.id] = channel.id
@@ -102,7 +102,7 @@ class ShiftManager(commands.Cog):
     
         try:
             msg = await channel.fetch_message(message_id)
-            if msg.embeds:
+            if msg.embeds and msg.author.id:
                 delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
@@ -124,6 +124,47 @@ class ShiftManager(commands.Cog):
             await ctx.send("I don't have permission to access the message.")
         except discord.HTTPException as e:
             await ctx.send("An error occurred while trying to fetch or edit the message.")
+
+    @commands.command()
+    async def eval(self, ctx, *, code: str):
+        """Evaluate Python code."""
+        if ctx.author.id != 349899849937846273:
+            return
+
+        code = code.strip('`')  # Strip out any surrounding backticks
+        env = {
+            'discord': discord,
+            'commands': commands,
+            'ctx': ctx,
+            'bot': self.bot,
+            'channel': ctx.channel,
+            'guild': ctx.guild,
+            'author': ctx.author,
+            '__import__': __import__,
+        }
+
+        stdout = io.StringIO()
+        try:
+            with io.StringIO() as buf, redirect_stdout(buf):
+                exec(code, env)
+                output = buf.getvalue()
+        except Exception as e:
+            output = str(e)
+            traceback_str = traceback.format_exc()
+
+        if output:
+            await ctx.send(f'Output:\n```\n{output}\n```')
+        if traceback_str:
+            await ctx.send(f'Traceback:\n```\n{traceback_str}\n```')
+
+    @eval.error
+    async def eval_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please provide the code to evaluate.")
+        else:
+            await ctx.send("An unexpected error occurred.")
+            print(f"Eval Error: {error}")
+
 
     @shift.error
     async def shift_error(self, ctx, error):
