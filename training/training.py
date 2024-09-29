@@ -1,4 +1,3 @@
-
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone
@@ -63,7 +62,7 @@ class TrainingManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def training(self, ctx):
-        self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc))
+        self.training_start_times[ctx.guild.id] = datetime.now(timezone.utc)
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
         session_ping = f"<@&{role_id}>"
@@ -72,7 +71,7 @@ class TrainingManager(commands.Cog):
 
         embed = discord.Embed(
             title="Training",
-            description=f"A training is being at the Training Center! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
+            description=f"Training is being hostedat the Training Center! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist. ",
             color=self.bot.main_color
         )
         embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
@@ -82,11 +81,59 @@ class TrainingManager(commands.Cog):
 
         channel = self.bot.get_channel(training_channel_id)
         if channel:
-            msg = await channel.send(f"{session_ping}", embed=embed)
+            button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+            view = discord.ui.View()
+            view.add_item(button)
+
+            msg = await channel.send(f"{session_ping}", embed=embed, view=view)
             self.training_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
-            await ctx.send(f"{emoji} | Training has been started!\n\n`msgID: {msg.id}`")
+            button.callback = lambda interaction: self.end_training_callback(interaction, msg.id)
+            await ctx.send(f"{emoji} | Training has been started!")
         else:
             await ctx.send("The specified channel could not be found.")
+
+    async def end_training_callback(self, interaction, message_id):
+        ctx = await self.bot.get_context(interaction.message)
+
+        if ctx.guild.id not in self.training_start_times:
+            await interaction.response.send_message("No active training found for this server.", ephemeral=True)
+            return
+    
+        training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        channel = self.bot.get_channel(training_channel_id)
+        if not channel:
+            await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
+            return
+    
+        try:
+            msg = await channel.fetch_message(message_id)
+            if msg.embeds and msg.author.id == 738395338393518222:
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
+                embed = msg.embeds[0]
+                
+                if embed.title == "Training":
+                    host_field = embed.fields[0].value
+                    embed.title = "Training Ended"
+                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future trainings.\n\nDeleting this message <t:{delete_time_unix}:R>"
+                    embed.color = 0xED4245
+                    embed.set_footer(text=f"Ended by: {interaction.user.name}")
+                    embed.clear_fields()
+                    await msg.edit(embed=embed, view=None)
+                    await interaction.response.send_message(f"{emoji} | Training has ended.", ephemeral=True)
+        
+                    # Wait for 10 minutes before deleting the message
+                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
+                    await msg.delete()  # Delete the edited message after 10 minutes
+                else:
+                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+            else:
+                await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
+        except discord.NotFound:
+            await interaction.response.send_message("Message not found.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+        except discord.HTTPException as e:
+            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -101,50 +148,6 @@ class TrainingManager(commands.Cog):
     async def trainingchannel(self, ctx, channel: discord.TextChannel):
         self.training_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"{emoji} | Training messages will now be sent in {channel.mention}.")
-
-    @commands.command(aliases=['et'])
-    @checks.has_permissions(PermissionLevel.REGULAR)
-    @is_allowed_role()
-    async def endtraining(self, ctx, message_id: int):
-        if ctx.guild.id not in self.training_start_times:
-            await ctx.send("No active training found for this server.")
-            return
-    
-        training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
-        channel = self.bot.get_channel(training_channel_id)
-        if not channel:
-            await ctx.send("The training channel could not be found.")
-            return
-    
-        try:
-            msg = await channel.fetch_message(message_id)
-            if msg.embeds and msg.author.id == 738395338393518222:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
-                embed = msg.embeds[0]
-                
-                if embed.title == "Training":
-                    host_field = embed.fields[0].value
-                    embed.title = "Training Ended"
-                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future trainings.\n\nDeleting this message <t:{delete_time_unix}:R>"
-                    embed.color = 0xED4245
-                    embed.clear_fields()
-                    await msg.edit(embed=embed)
-                    await ctx.send(f"{emoji} | Training with message ID `{message_id}` has ended.")
-        
-                    # Wait for 15 minutes before deleting the message
-                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                    await msg.delete()  # Delete the edited message after 10 minutes
-                else:
-                    await ctx.send("The message provided isn't valid.")
-            else:
-                await ctx.send("The message provided does not contain an embed or isn't valid.")
-        except discord.NotFound:
-            await ctx.send("Message not found.")
-        except discord.Forbidden:
-            await ctx.send("I don't have permission to access the message.")
-        except discord.HTTPException as e:
-            await ctx.send("An error occurred while trying to fetch or edit the message.")
-
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -165,8 +168,6 @@ class TrainingManager(commands.Cog):
     ```"""
     
         await ctx.send(config_info)
-    
-
 
     @training.error
     async def training_error(self, ctx, error):
@@ -175,7 +176,6 @@ class TrainingManager(commands.Cog):
         elif isinstance(error, commands.MissingRole):
             await ctx.send("You don't have the required role to use this command.")
         else:
-            # await ctx.send("An unexpected error occurred."),
             await self.send_error_log(error, ctx, "training_error")
             print(f"Error: {error}")
 
@@ -185,19 +185,8 @@ class TrainingManager(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to use this command.")
         else:
-            # await ctx.send("An unexpected error occurred.")
             await self.send_error_log(error, ctx, "command_error")
             print(f"Error: {error}")
-
-    @endtraining.error
-    async def endtraining_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please provide the message ID for the training to end. Usage: `-endtraining <msgID>`.")
-        else:
-            # await ctx.send("An unexpected error occurred.")
-            await self.send_error_log(error, ctx, "endtraining_error")
-            print(f"Error: {error}")
-
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
