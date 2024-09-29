@@ -55,7 +55,7 @@ class ShiftManager(commands.Cog):
         start_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp())
 
         embed = discord.Embed(
-            title="Session Ping",
+            title="Shift",
             description=f"A shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
             color=self.bot.main_color
         )
