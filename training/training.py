@@ -89,16 +89,16 @@ class TrainingManager(commands.Cog):
 
                 start_button.callback = start_training_callback
 
-                # Lock Training button
-                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
+                # Lock Training button (initially disabled)
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
                 async def lock_training_callback(interaction):
                     await self.lock_training_callback(interaction, msg.id)
 
                 lock_button.callback = lock_training_callback
                 view.add_item(lock_button)
 
-                # End Training button
-                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+                # End Training button (initially disabled)
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
                 async def end_training_callback(interaction):
                     await self.end_training_callback(interaction, msg.id)
 
@@ -136,8 +136,13 @@ class TrainingManager(commands.Cog):
                 embed = msg.embeds[0]
                 if embed.title == "Training":
                     embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
-                    await msg.edit(embed=embed)
 
+                    # Enable Lock and End Training buttons
+                    for item in interaction.message.components[0].children:
+                        if item.label in ["Lock Training", "End Training"]:
+                            item.disabled = False
+
+                    await msg.edit(embed=embed, view=interaction.message.components[0])
                     await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
