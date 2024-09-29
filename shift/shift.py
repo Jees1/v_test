@@ -57,9 +57,9 @@ class ShiftManager(commands.Cog):
         embed = discord.Embed(
             title="Session Ping",
             description=f"{session_ping}, a shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
-            color=0x7289DA
+            color=self.bot.main_color
         )
-        embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}", inline=False)
+        embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{" | "ctx.author.nick if ctx.author.nick else ""}", inline=False)
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
         embed.set_footer(text=f"Vinns Hotel - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
@@ -76,14 +76,14 @@ class ShiftManager(commands.Cog):
     @is_admin_user()
     async def shiftmention(self, ctx, role: discord.Role):
         self.shift_mention_roles[ctx.guild.id] = role.id
-        await ctx.send(f"Shift mention role set to {role.mention}.")
+        await ctx.send(f"<:ApprovedWhite:804267284553269309> | Shift mention role set to {role.mention}.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_admin_user()
     async def shiftchannel(self, ctx, channel: discord.TextChannel):
         self.shift_channel_ids[ctx.guild.id] = channel.id
-        await ctx.send(f"Shift messages will now be sent in {channel.mention}.")
+        await ctx.send(f"<:ApprovedWhite:804267284553269309> | Shift messages will now be sent in {channel.mention}.")
 
     @commands.command(aliases=['es'])
     @checks.has_permissions(PermissionLevel.REGULAR)
@@ -102,16 +102,17 @@ class ShiftManager(commands.Cog):
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds:
+                delete_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp() + 900) # 900 seconds = 15 minutes
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
                 embed.title = "Shift Ended"
-                embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts."
+                embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message in <t:{delete_time_unix}:R>"
                 embed.clear_fields()
                 await msg.edit(embed=embed)
-                await ctx.send(f"Shift with message ID {message_id} has been ended.")
+                await ctx.send(f"<:ApprovedWhite:804267284553269309> | Shift with message ID {message_id} has been ended.")
     
                 # Wait for 15 minutes before deleting the message
-                await asyncio.sleep(20)  # 900 seconds = 15 minutes
+                await asyncio.sleep(900)  # 900 seconds = 15 minutes
                 await msg.delete()  # Delete the edited message after 15 minutes
                 
             else:
@@ -119,7 +120,7 @@ class ShiftManager(commands.Cog):
         except discord.NotFound:
             await ctx.send("Message not found.")
         except discord.Forbidden:
-            await ctx.send("I don't have permission to access the message.")
+            await ctx.send("I don't have permissions to access the message.")
         except discord.HTTPException:
             await ctx.send("An error occurred while trying to fetch or edit the message.")
 
