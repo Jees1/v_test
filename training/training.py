@@ -56,7 +56,7 @@ class TrainingManager(commands.Cog):
         time_select = discord.ui.Select(placeholder="Select the training time...", options=[discord.SelectOption(label=time) for time in time_options])
 
         async def time_callback(interaction):
-            await interaction.response.defer()  # Acknowledge the interaction
+            await interaction.response.defer()
             selected_time = time_select.values[0]
             self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))
 
@@ -122,44 +122,38 @@ class TrainingManager(commands.Cog):
 
                     action_buttons = discord.ui.View()
 
-                    # Create the Lock Training button
+                    # Create Lock Training button
                     lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
-
                     async def lock_training_callback(interaction):
                         await interaction.response.defer()  # Acknowledge the interaction
                         if not await self.is_allowed_role()(ctx):
                             await interaction.followup.send("You can't do that.", ephemeral=True)
                             return
-
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.set_field_at(1, name="Session Status", value="Training Locked", inline=False)
-                        embed.color = 0xED4245  # Red for locked status
-                        await msg.edit(embed=embed, view=None)  # Remove buttons after locking
+                        embed.color = 0xED4245
+                        await msg.edit(embed=embed, view=None)
                         await interaction.followup.send(f"{emoji} | Training has been locked.", ephemeral=True)
 
                     lock_button.callback = lock_training_callback
+                    action_buttons.add_item(lock_button)
 
-                    # Create the End Training button
+                    # Create End Training button
                     end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
-
                     async def end_training_callback(interaction):
                         await interaction.response.defer()  # Acknowledge the interaction
                         if not await self.is_allowed_role()(ctx):
                             await interaction.followup.send("You can't do that.", ephemeral=True)
                             return
-                        
                         await self.end_training_callback(interaction, msg.id)
 
                     end_button.callback = end_training_callback
-
-                    # Add buttons to the view
-                    action_buttons.add_item(lock_button)
                     action_buttons.add_item(end_button)
 
                     await msg.edit(view=action_buttons)
-                    await interaction.response.send_message(f"{emoji} | Training has started!", ephemeral=True)
+                    await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
