@@ -112,15 +112,11 @@ class TrainingManager(commands.Cog):
         time_select.callback = time_callback
         await ctx.send("Please select the training time:", view=discord.ui.View().add_item(time_select))
 
-    async def start_training_callback(self, interaction, message_id, host_id):
+    async def start_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
 
         if ctx.guild.id not in self.training_start_times:
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
-            return
-
-        if interaction.user.id != host_id:
-            await interaction.response.send_message("Only the host can start the training.", ephemeral=True)
             return
 
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
@@ -137,24 +133,18 @@ class TrainingManager(commands.Cog):
                     embed.set_field_at(1, name="Session Status", value="Training has started!", inline=False)
                     await msg.edit(embed=embed)
 
-                    # Adding the update status button
                     update_button = discord.ui.Button(label="Update Status", style=discord.ButtonStyle.secondary)
                     view = discord.ui.View()
                     view.add_item(update_button)
 
-                    # Assigning the callback for the update button
+                    # Ensure the update button calls the right method
                     update_button.callback = lambda interaction: self.update_status_callback(interaction, msg.id)
                     await msg.edit(view=view)
                     await interaction.response.send_message(f"{emoji} | Training has started!", ephemeral=True)
                 else:
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
-            else:
-                await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
-        except discord.NotFound:
-            await interaction.response.send_message("Message not found.", ephemeral=True)
-        except discord.Forbidden:
-            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
-
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
 
     async def update_status_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
@@ -173,8 +163,8 @@ class TrainingManager(commands.Cog):
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
-                options = ["End Training", "Lock Training"]
 
+                options = ["End Training", "Lock Training"]
                 action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
 
                 async def action_callback(interaction):
@@ -195,10 +185,8 @@ class TrainingManager(commands.Cog):
                 await interaction.response.send_message("Select an action:", view=view, ephemeral=True)
             else:
                 await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
-        except discord.NotFound:
-            await interaction.response.send_message("Message not found.", ephemeral=True)
-        except discord.Forbidden:
-            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
 
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
