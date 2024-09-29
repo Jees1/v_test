@@ -167,38 +167,38 @@ class TrainingManager(commands.Cog):
         await ctx.send(config_info)
     
 
-@endtraining.error
-async def endtraining_error(self, ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please provide the message ID for the training to end. Usage: `-endtraining <msgID>`.") 
-    elif isinstance(error, commands.BadArgument):
-        await ctx.send("Invalid message ID provided.")
-    else:
-        await ctx.send("An unexpected error occurred.")
-        print(f"Unexpected error in endtraining command: {error}")
-        await self.send_error_log(error, ctx, "endtraining_error")
-
-@training.error
-async def training_error(self, ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("You need to specify a role to mention. Usage: `-training`.")
-    elif isinstance(error, commands.MissingRole):
-        await ctx.send("You don't have the required role to use this command.")
-    else:
-        await ctx.send("An unexpected error occurred.")
-        print(f"Unexpected error in training command: {error}")
-        await self.send_error_log(error, ctx, "training_error")
-
-@trainingmention.error
-@trainingchannel.error
-async def command_error(self, ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You do not have permission to use this command.")
-    else:
-        await ctx.send("An unexpected error occurred.")
-        print(f"Unexpected error in command: {error}")
-        await self.send_error_log(error, ctx, "command_error")
-
+    @endtraining.error
+    async def endtraining_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please provide the message ID for the training to end. Usage: `-endtraining <msgID>`.") 
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send("Invalid message ID provided.")
+        else:
+            await ctx.send("An unexpected error occurred.")
+            print(f"Unexpected error in endtraining command: {error}")
+            await self.send_error_log(error, ctx, "endtraining_error")
+    
+    @training.error
+    async def training_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("You need to specify a role to mention. Usage: `-training`.")
+        elif isinstance(error, commands.MissingRole):
+            await ctx.send("You don't have the required role to use this command.")
+        else:
+            await ctx.send("An unexpected error occurred.")
+            print(f"Unexpected error in training command: {error}")
+            await self.send_error_log(error, ctx, "training_error")
+    
+    @trainingmention.error
+    @trainingchannel.error
+    async def command_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have permission to use this command.")
+        else:
+            await ctx.send("An unexpected error occurred.")
+            print(f"Unexpected error in command: {error}")
+            await self.send_error_log(error, ctx, "command_error")
+    
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
