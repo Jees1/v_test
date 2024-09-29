@@ -89,7 +89,7 @@ class ShiftManager(commands.Cog):
             view = discord.ui.View()
             view.add_item(button)
 
-            confirmation_msg = await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`", view=view)
+            confirmation_msg = await ctx.send(f"{emoji} | Shift has been started!", view=view) # \n\n`msgID: {msg.id}`
 
             button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id, confirmation_msg)
         else:
