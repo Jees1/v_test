@@ -56,18 +56,19 @@ class ShiftManager(commands.Cog):
 
         embed = discord.Embed(
             title="Session Ping",
-            description=f"{session_ping}, a shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
+            description=f"A shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
             color=self.bot.main_color
         )
         embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
-        embed.set_footer(text=f"Vinns Hotel - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        embed.set_footer(text=f"Vinns Hotel")
 
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
             msg = await channel.send(f"{session_ping} {ctx.author.mention} is hosting a shift!", embed=embed)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
+            await ctx.send(f"<:cow:1012643349150314496> | Shift has been started!\n`msgID: {msg.id}`")
         else:
             await ctx.send("The specified channel could not be found.")
 
@@ -104,17 +105,18 @@ class ShiftManager(commands.Cog):
             msg = await channel.fetch_message(message_id)
             print(f"Fetched message: {msg.content}")  # Debugging line
             if msg.embeds:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 900) # 900 seconds = 15 minutes
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600) # 600 seconds = 10 minutes
                 embed = msg.embeds[0]
                 host_field = embed.fields[0].value
                 embed.title = "Shift Ended"
-                embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message in <t:{delete_time_unix}:R>"
+                embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
+                embed.color = 0xED4245
                 embed.clear_fields()
                 await msg.edit(embed=embed)
-                await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID {message_id} has been ended.")
+                await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID `{message_id}` has ended.")
     
                 # Wait for 15 minutes before deleting the message
-                await asyncio.sleep(900)  # 900 seconds = 15 minutes
+                await asyncio.sleep(600)  # 600 seconds = 10 minutes
                 await msg.delete()  # Delete the edited message after 15 minutes
             else:
                 await ctx.send("The message does not contain an embed.")
@@ -154,7 +156,7 @@ class ShiftManager(commands.Cog):
         
         
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <MessageID>`.")
+            await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <msgID>`.")
         else:
             await ctx.send("An unexpected error occurred.")
             
