@@ -152,25 +152,25 @@ class TrainingManager(commands.Cog):
 
     async def update_status_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
-
+    
         if ctx.guild.id not in self.training_start_times:
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
-
+    
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
         if not channel:
             await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
             return
-
+    
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
-
+    
                 options = ["End Training", "Lock Training"]
                 action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
-
+    
                 async def action_callback(interaction):
                     selected_action = action_select.values[0]
                     if selected_action == "End Training":
@@ -180,9 +180,9 @@ class TrainingManager(commands.Cog):
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
-                        await msg.edit(embed=embed)
+                        await msg.edit(embed=embed)  # Ensure embed is the correct object
                         await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
-
+    
                 action_select.callback = action_callback
                 view = discord.ui.View()
                 view.add_item(action_select)
@@ -191,7 +191,8 @@ class TrainingManager(commands.Cog):
                 await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
-
+            print(f"Error in update_status_callback: {e}")
+            
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
 
