@@ -84,7 +84,7 @@ class TrainingManager(commands.Cog):
 
                 async def start_training_callback(interaction):
                     await self.start_training_callback(interaction, msg.id)
-                
+
                 start_button.callback = start_training_callback
                 
                 try:
