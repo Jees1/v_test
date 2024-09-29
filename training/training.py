@@ -219,26 +219,31 @@ class TrainingManager(commands.Cog):
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 10 minutes
                 embed = msg.embeds[0]
+                host_field = embed.fields[0].value
+                embed.title = "Training Ended"
+                embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
+                embed.color = 0xED4245
 
-                if embed.title == "Training":
-                    host_field = embed.fields[0].value
-                    embed.title = "Training Ended"
-                    embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending! Deleting this message <t:{delete_time_unix}:R>"
-                    embed.color = 0xED4245
+                # Create a new view and disable all buttons
+                new_view = discord.ui.View()
+                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
 
-                    # Disable all buttons
-                    for item in interaction.message.components[0].children:
-                        item.disabled = True
+                # Add disabled buttons to the view
+                new_view.add_item(start_button)
+                new_view.add_item(lock_button)
+                new_view.add_item(end_button)
 
-                    await msg.edit(embed=embed, view=interaction.message.components[0])  # Use the original view
-                    await interaction.response.send_message("Training has ended!", ephemeral=True)
+                await msg.edit(embed=embed, view=new_view)
+                await interaction.response.send_message("Training has ended!", ephemeral=True)
 
-                    await asyncio.sleep(600)  # Wait 10 minutes before deleting
-                    await msg.delete()
-                else:
-                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+                # Optionally, delete the message after a delay if needed
+                await asyncio.sleep(600)  # Wait 10 minutes before deleting
+                await msg.delete()
+            else:
+                await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
