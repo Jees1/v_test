@@ -116,7 +116,7 @@ class ShiftManager(commands.Cog):
         
                     # Wait for 15 minutes before deleting the message
                     await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                    await msg.delete()  # Delete the edited message after 15 minutes
+                    await msg.delete()  # Delete the edited message after 10 minutes
                 else:
                     await ctx.send("The message provided isn't valid.")
             else:
