@@ -22,6 +22,8 @@ ADMIN_USERS = [
     349899849937846273
 ]
 
+emoji = "<:cow:1012643349150314496>"
+
 class ShiftManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -62,13 +64,13 @@ class ShiftManager(commands.Cog):
         embed.add_field(name="Host", value=f"{host_mention} | {ctx.author}{' | ' + ctx.author.nick if ctx.author.nick else ''}", inline=False)
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
-        embed.set_footer(text=f"Vinns Hotel")
+        embed.set_footer(text=f"Vinns Sessions")
 
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
             msg = await channel.send(f"{session_ping}", embed=embed)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
-            await ctx.send(f"<:cow:1012643349150314496> | Shift has been started!\n\n`msgID: {msg.id}`")
+            await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`")
         else:
             await ctx.send("The specified channel could not be found.")
 
@@ -77,14 +79,14 @@ class ShiftManager(commands.Cog):
     @is_admin_user()
     async def shiftmention(self, ctx, role: discord.Role):
         self.shift_mention_roles[ctx.guild.id] = role.id
-        await ctx.send(f"<:cow:1012643349150314496> | Shift mention role set to {role.mention}.")
+        await ctx.send(f"{emoji} | Shift mention role set to {role.mention}.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def shiftchannel(self, ctx, channel: discord.TextChannel):
         self.shift_channel_ids[ctx.guild.id] = channel.id
-        await ctx.send(f"<:cow:1012643349150314496> | Shift messages will now be sent in {channel.mention}.")
+        await ctx.send(f"{emoji} | Shift messages will now be sent in {channel.mention}.")
 
     @commands.command(aliases=['es'])
     @checks.has_permissions(PermissionLevel.REGULAR)
@@ -112,7 +114,7 @@ class ShiftManager(commands.Cog):
                     embed.color = 0xED4245
                     embed.clear_fields()
                     await msg.edit(embed=embed)
-                    await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID `{message_id}` has ended.")
+                    await ctx.send(f"{emoji} | Shift with message ID `{message_id}` has ended.")
         
                     # Wait for 15 minutes before deleting the message
                     await asyncio.sleep(600)  # 600 seconds = 10 minutes
