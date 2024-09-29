@@ -142,6 +142,7 @@ class TrainingManager(commands.Cog):
                     view = discord.ui.View()
                     view.add_item(update_button)
 
+                    # Assigning the callback for the update button
                     update_button.callback = lambda interaction: self.update_status_callback(interaction, msg.id)
                     await msg.edit(view=view)
                     await interaction.response.send_message(f"{emoji} | Training has started!", ephemeral=True)
@@ -153,6 +154,7 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("Message not found.", ephemeral=True)
         except discord.Forbidden:
             await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+
 
     async def update_status_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
