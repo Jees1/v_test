@@ -122,10 +122,10 @@ class TrainingManager(commands.Cog):
 
                     action_buttons = discord.ui.View()
 
-                    # Create Lock Training button
+                    # Lock Training button
                     lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
                     async def lock_training_callback(interaction):
-                        await interaction.response.defer()  # Acknowledge the interaction
+                        await interaction.response.defer()
                         if not await self.is_allowed_role()(ctx):
                             await interaction.followup.send("You can't do that.", ephemeral=True)
                             return
@@ -140,10 +140,10 @@ class TrainingManager(commands.Cog):
                     lock_button.callback = lock_training_callback
                     action_buttons.add_item(lock_button)
 
-                    # Create End Training button
+                    # End Training button
                     end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
                     async def end_training_callback(interaction):
-                        await interaction.response.defer()  # Acknowledge the interaction
+                        await interaction.response.defer()
                         if not await self.is_allowed_role()(ctx):
                             await interaction.followup.send("You can't do that.", ephemeral=True)
                             return
