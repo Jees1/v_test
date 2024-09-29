@@ -237,13 +237,13 @@ class TrainingManager(commands.Cog):
                 embed.title = "Training Ended"
                 embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
                 embed.color = 0xED4245
-
+    
             # Create a new view and disable all buttons
             new_view = discord.ui.View()
             new_view.add_item(discord.ui.Button(label="Start Training", disabled=True))
             new_view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
             new_view.add_item(discord.ui.Button(label="End Training", disabled=True))
-
+    
             await msg.edit(embed=embed, view=new_view)
             await interaction.followup.send("Training has ended!", ephemeral=True)
             await self.send_error_log("Training ended successfully", ctx, "Debug")
