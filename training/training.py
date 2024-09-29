@@ -139,8 +139,8 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
     
-        # Check if the user has an allowed role
-        if not any(role.id in ALLOWED_ROLES for role in ctx.author.roles):
+        # Use the is_allowed_role check
+        if not await self.is_allowed_role()(ctx):
             await interaction.response.send_message("You can't do that.", ephemeral=True)
             return
     
