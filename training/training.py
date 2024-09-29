@@ -169,7 +169,7 @@ class TrainingManager(commands.Cog):
                 embed = msg.embeds[0]
     
                 # Log the embed to check its structure
-                await self.send_error_log(f"Embed before modification: {embed.to_dict()}", ctx, "Debugging before modification")
+                #await self.send_error_log(f"Embed before modification: {embed.to_dict()}", ctx, "Debugging before modification")
     
                 options = ["End Training", "Lock Training"]
                 action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
@@ -182,7 +182,7 @@ class TrainingManager(commands.Cog):
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
     
                         # Log before modifying the embed
-                        await self.send_error_log(f"Before Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
+                        #await self.send_error_log(f"Before Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
     
                         new_embed = discord.Embed(
                             title="Training Locked",
@@ -192,7 +192,7 @@ class TrainingManager(commands.Cog):
                         new_embed.set_footer(text=embed.footer.text)  # Copy footer
     
                         # Log after creating the new embed
-                        await self.send_error_log(f"New embed for Lock Training: {new_embed.to_dict()}", ctx, "New Lock Embed")
+                        #await self.send_error_log(f"New embed for Lock Training: {new_embed.to_dict()}", ctx, "New Lock Embed")
     
                         try:
                             await msg.edit(embed=new_embed)  # Edit with the new embed
