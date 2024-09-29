@@ -129,6 +129,28 @@ class ShiftManager(commands.Cog):
             await ctx.send("An error occurred while trying to fetch or edit the message.")
 
 
+    @commands.command()
+    @commands.has_permissions(PermissionLevel.OWNER)
+    @is_allowed_role()
+    async def shiftconfig(self, ctx):
+        # Restrict command usage to specific channel
+        if ctx.channel.id != 836283712193953882:
+            await ctx.send("Wrong channel buddy")
+            return
+    
+        # Create a string representation of the current configuration
+        config_info = f"""```yaml
+    Shift Start Times: {self.shift_start_times}
+    Shift Channel IDs: {self.shift_channel_ids}
+    Shift Mention Roles: {self.shift_mention_roles}
+    Allowed Roles: {ALLOWED_ROLES}
+    Admin Users: {ADMIN_USERS}
+    ```"""
+    
+        await ctx.send(config_info)
+    
+
+
     @shift.error
     async def shift_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
