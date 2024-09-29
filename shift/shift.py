@@ -84,10 +84,62 @@ class ShiftManager(commands.Cog):
             msg = await channel.send(f"{session_ping}", embed=embed)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
 
-            # Confirmation message
-            confirmation_msg = await ctx.send(f"{emoji} | Shift has been started!\n\n`msgID: {msg.id}`")
+            # Confirmation message with button
+            button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
+            view = discord.ui.View()
+            view.add_item(button)
+
+            confirmation_msg = await ctx.send(f"{emoji} | Shift has been started!", view=view) # \n\n`msgID: {msg.id}`
+
+            button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id, confirmation_msg)
         else:
             await ctx.send("The specified channel could not be found.")
+
+    async def end_shift_callback(self, interaction, message_id, confirmation_msg):
+        ctx = await self.bot.get_context(interaction.message)
+
+        if ctx.guild.id not in self.shift_start_times:
+            await interaction.response.send_message("No active shift found for this server.", ephemeral=True)
+            return
+    
+        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        channel = self.bot.get_channel(shift_channel_id)
+        if not channel:
+            await interaction.response.send_message("The shift channel could not be found.", ephemeral=True)
+            return
+    
+        try:
+            msg = await channel.fetch_message(message_id)
+            if msg.embeds and msg.author.id == 738395338393518222:
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
+                embed = msg.embeds[0]
+                
+                if embed.title == "Shift":
+                    host_field = embed.fields[0].value
+                    embed.title = "Shift Ended"
+                    embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
+                    embed.color = 0xED4245
+                    embed.clear_fields()
+                    await msg.edit(embed=embed)
+
+                    # Edit the confirmation message
+                    await confirmation_msg.edit(content=f"{emoji} | Successfully ended the shift!", view=None)
+
+                    await interaction.response.send_message("Shift has ended.", ephemeral=True)
+
+                    # Wait for 10 minutes before deleting the message
+                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
+                    await msg.delete()  # Delete the edited message after 10 minutes
+                else:
+                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+            else:
+                await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
+        except discord.NotFound:
+            await interaction.response.send_message("Message not found.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+        except discord.HTTPException as e:
+            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
@@ -107,10 +159,12 @@ class ShiftManager(commands.Cog):
     @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def shiftconfig(self, ctx):
+        # Restrict command usage to specific channel
         if ctx.channel.id != 836283712193953882:
             await ctx.send("Wrong channel buddy")
             return
     
+        # Create a string representation of the current configuration
         config_info = f"""```yaml
     Shift Start Times: {self.shift_start_times}
     Shift Channel IDs: {self.shift_channel_ids}
@@ -120,48 +174,6 @@ class ShiftManager(commands.Cog):
     ```"""
     
         await ctx.send(config_info)
-
-    @commands.context_menu(name="End Shift")
-    async def end_shift(self, interaction: discord.Interaction, message: discord.Message):
-        ctx = await self.bot.get_context(interaction.message)
-
-        if ctx.guild.id not in self.shift_start_times:
-            await interaction.response.send_message("No active shift found for this server.", ephemeral=True)
-            return
-        
-        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
-        if message.channel.id != shift_channel_id:
-            await interaction.response.send_message("This message is not in the correct shift channel.", ephemeral=True)
-            return
-
-        try:
-            if message.embeds and message.author.id == 738395338393518222:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
-                embed = message.embeds[0]
-                
-                if embed.title == "Shift":
-                    host_field = embed.fields[0].value
-                    embed.title = "Shift Ended"
-                    embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
-                    embed.color = 0xED4245
-                    embed.clear_fields()
-                    await message.edit(embed=embed)
-
-                    await interaction.response.send_message(f"{emoji} | EDIT: Successfully ended the shift!", ephemeral=True)
-
-                    # Wait for 10 minutes before deleting the message
-                    await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                    await message.delete()  # Delete the edited message after 10 minutes
-                else:
-                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
-            else:
-                await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
-        except discord.NotFound:
-            await interaction.response.send_message("Message not found.", ephemeral=True)
-        except discord.Forbidden:
-            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
-        except discord.HTTPException as e:
-            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
 
     @shift.error
     async def shift_error(self, ctx, error):
@@ -182,5 +194,6 @@ class ShiftManager(commands.Cog):
             await self.send_error_log(error, ctx, "command_error")
             print(f"Error: {error}")
 
+#bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
     await bot.add_cog(ShiftManager(bot))
