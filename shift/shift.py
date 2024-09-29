@@ -160,7 +160,7 @@ class ShiftManager(commands.Cog):
         if traceback_str:
             await ctx.send(f'Traceback:\n```\n{traceback_str}\n```')
 
-    @eval.error
+    @evaltest.error
     async def eval_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please provide the code to evaluate.")
