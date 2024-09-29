@@ -168,12 +168,8 @@ class TrainingManager(commands.Cog):
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
     
-                await self.send_error_log(f"Embed type: {type(embed)}", ctx, "Debugging embed type")
-    
-                if not isinstance(embed, discord.Embed):
-                    await self.send_error_log("Embed is not of type discord.Embed", ctx, "Invalid embed type")
-                    await interaction.response.send_message("The message does not contain a valid embed.", ephemeral=True)
-                    return
+                # Log embed before any modification
+                await self.send_error_log(f"Embed before modification: {embed.to_dict()}", ctx, "Debugging before modification")
     
                 options = ["End Training", "Lock Training"]
                 action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
@@ -184,18 +180,20 @@ class TrainingManager(commands.Cog):
                         await self.end_training_callback(interaction, msg.id)
                     elif selected_action == "Lock Training":
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
-                        
-                        # Log before modifying the embed
-                        await self.send_error_log(f"Before modification: {embed.to_dict()}", ctx, "Before Lock Training modification")
+    
+                        # Log before modification
+                        await self.send_error_log(f"Before Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
     
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
     
-                        # Log after modifying the embed
-                        await self.send_error_log(f"After modification: {embed.to_dict()}", ctx, "After Lock Training modification")
+                        # Log after modification
+                        await self.send_error_log(f"After Lock Training modification: {embed.to_dict()}", ctx, "Lock Training")
     
                         try:
+                            # Check what is being passed to msg.edit
+                            await self.send_error_log(f"Editing message with embed: {embed.to_dict()}", ctx, "Editing message")
                             await msg.edit(embed=embed)
                             await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
                         except Exception as e:
