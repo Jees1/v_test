@@ -206,6 +206,7 @@ class TrainingManager(commands.Cog):
 
 
     async def end_training_callback(self, interaction, message_id):
+        await self.send_error_log("0", ctx, "0")
         ctx = await self.bot.get_context(interaction.message)
         await self.send_error_log("1", ctx, "1")
         # Log if there's no active training
