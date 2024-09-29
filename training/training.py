@@ -202,7 +202,6 @@ class TrainingManager(commands.Cog):
             await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
-
     async def end_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
     
@@ -235,24 +234,22 @@ class TrainingManager(commands.Cog):
                 embed.title = "Training Ended"
                 embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
                 embed.color = 0xED4245
-        
+                
                 # Create a new view and disable all buttons
                 new_view = discord.ui.View()
                 new_view.add_item(discord.ui.Button(label="Start Training", disabled=True))
                 new_view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
                 new_view.add_item(discord.ui.Button(label="End Training", disabled=True))
-        
+    
                 await msg.edit(embed=embed, view=new_view)
                 await interaction.followup.send("Training has ended!", ephemeral=True)
                 await self.send_error_log("Training ended successfully", ctx, "Debug")
             else:
                 await interaction.followup.send("The message provided isn't valid.", ephemeral=True)
                 await self.send_error_log("Invalid message", ctx, "Debug")
-    except Exception as e:
-        await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "End Training Error")
-        await interaction.followup.send("An unexpected error occurred. Please try again later.", ephemeral=True)
-
-    
+        except Exception as e:
+            await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "End Training Error")
+            await interaction.followup.send("An unexpected error occurred. Please try again later.", ephemeral=True)
 
 
     @commands.command()
