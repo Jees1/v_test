@@ -150,8 +150,6 @@ class TrainingManager(commands.Cog):
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
 #################################
-
-    
     async def update_status_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
     
@@ -170,7 +168,6 @@ class TrainingManager(commands.Cog):
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
     
-                # Log embed type for debugging
                 await self.send_error_log(f"Embed type: {type(embed)}", ctx, "Debugging embed type")
     
                 if not isinstance(embed, discord.Embed):
@@ -187,15 +184,19 @@ class TrainingManager(commands.Cog):
                         await self.end_training_callback(interaction, msg.id)
                     elif selected_action == "Lock Training":
                         lock_time_unix = int(datetime.now(timezone.utc).timestamp())
+                        
+                        # Log before modifying the embed
+                        await self.send_error_log(f"Before modification: {embed.to_dict()}", ctx, "Before Lock Training modification")
+    
                         embed.title = "Training Locked"
                         embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
                         embed.color = 0xED4245
     
-                        # Log the embed before editing
-                        await self.send_error_log(f"Attempting to edit embed: {embed.to_dict()}", ctx, "Editing embed")
+                        # Log after modifying the embed
+                        await self.send_error_log(f"After modification: {embed.to_dict()}", ctx, "After Lock Training modification")
     
                         try:
-                            await msg.edit(embed=embed)  # Check embed is the correct object
+                            await msg.edit(embed=embed)
                             await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
                         except Exception as e:
                             await self.send_error_log(e, ctx, "Error editing embed during Lock Training")
@@ -217,7 +218,7 @@ class TrainingManager(commands.Cog):
         except Exception as e:
             await self.send_error_log(e, ctx, "Unexpected error")
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
-    
+
 ###########################
 
     
