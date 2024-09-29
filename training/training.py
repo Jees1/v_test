@@ -239,8 +239,10 @@ class TrainingManager(commands.Cog):
                 new_view.add_item(end_button)
     
                 # Acknowledge the interaction first
-                await interaction.response.send_message("Training has ended!", ephemeral=True)
+                await interaction.response.defer()  # This acknowledges the interaction without responding immediately
+    
                 await msg.edit(embed=embed, view=new_view)
+                await interaction.followup.send("Training has ended!", ephemeral=True)
     
                 # Optionally, delete the message after a delay if needed
                 await asyncio.sleep(600)  # Wait 10 minutes before deleting
@@ -250,6 +252,7 @@ class TrainingManager(commands.Cog):
         except Exception as e:
             await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
+
 
 
 
