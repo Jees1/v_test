@@ -76,14 +76,14 @@ class ShiftManager(commands.Cog):
     @is_admin_user()
     async def shiftmention(self, ctx, role: discord.Role):
         self.shift_mention_roles[ctx.guild.id] = role.id
-        await ctx.send(f"<:ApprovedWhite:804267284553269309> | Shift mention role set to {role.mention}.")
+        await ctx.send(f"<:cow:1012643349150314496> | Shift mention role set to {role.mention}.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_admin_user()
     async def shiftchannel(self, ctx, channel: discord.TextChannel):
         self.shift_channel_ids[ctx.guild.id] = channel.id
-        await ctx.send(f"<:ApprovedWhite:804267284553269309> | Shift messages will now be sent in {channel.mention}.")
+        await ctx.send(f"<:cow:1012643349150314496> | Shift messages will now be sent in {channel.mention}.")
 
     @commands.command(aliases=['es'])
     @checks.has_permissions(PermissionLevel.REGULAR)
@@ -109,7 +109,7 @@ class ShiftManager(commands.Cog):
                 embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message in <t:{delete_time_unix}:R>"
                 embed.clear_fields()
                 await msg.edit(embed=embed)
-                await ctx.send(f"<:ApprovedWhite:804267284553269309> | Shift with message ID {message_id} has been ended.")
+                await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID {message_id} has been ended.")
     
                 # Wait for 15 minutes before deleting the message
                 await asyncio.sleep(900)  # 900 seconds = 15 minutes
@@ -146,6 +146,7 @@ class ShiftManager(commands.Cog):
     @endshift.error
     async def endshift_error(self, ctx, error):
         await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <MessageID>`.")
+        print(f"Error: {error}")
 
 #bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 async def setup(bot):
