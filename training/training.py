@@ -98,7 +98,11 @@ class TrainingManager(commands.Cog):
                 view = discord.ui.View()
                 view.add_item(start_button)
 
-                start_button.callback = lambda interaction: self.start_training_callback(interaction, msg.id, ctx.author.id)
+                async def start_training_callback_wrapper(interaction):
+                    await self.start_training_callback(interaction, msg.id)
+                
+                start_button.callback = start_training_callback_wrapper
+
                 
                 try:
                     msg = await channel.send(f"{session_ping}", embed=embed, view=view)
