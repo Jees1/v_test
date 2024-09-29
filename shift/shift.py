@@ -104,7 +104,18 @@ class ShiftManager(commands.Cog):
             msg = await channel.fetch_message(message_id)
             print(f"Fetched message: {msg.content}")  # Debugging line
             if msg.embeds:
-                # (Rest of your existing code...)
+                delete_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp() + 900) # 900 seconds = 15 minutes
+                embed = msg.embeds[0]
+                host_field = embed.fields[0].value
+                embed.title = "Shift Ended"
+                embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message in <t:{delete_time_unix}:R>"
+                embed.clear_fields()
+                await msg.edit(embed=embed)
+                await ctx.send(f"<:cow:1012643349150314496> | Shift with message ID {message_id} has been ended.")
+    
+                # Wait for 15 minutes before deleting the message
+                await asyncio.sleep(900)  # 900 seconds = 15 minutes
+                await msg.delete()  # Delete the edited message after 15 minutes
             else:
                 await ctx.send("The message does not contain an embed.")
         except discord.NotFound:
