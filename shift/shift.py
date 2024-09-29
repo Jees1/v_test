@@ -126,34 +126,6 @@ class ShiftManager(commands.Cog):
         await msg.delete()
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.REGULAR)
-    @is_allowed_role()
-    async def endshift(self, ctx, message_id: int):
-        if ctx.guild.id not in self.shift_start_times:
-            await ctx.send("No active shift found for this server.")
-            return
-    
-        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
-        channel = self.bot.get_channel(shift_channel_id)
-        if not channel:
-            await ctx.send("The shift channel could not be found.")
-            return
-    
-        try:
-            msg = await channel.fetch_message(message_id)
-            if msg.embeds and msg.author.id == self.bot.user.id:
-                await self.end_shift(msg, ctx.author.mention)
-                await ctx.send(f"{emoji} | Shift with message ID `{message_id}` has ended.")
-            else:
-                await ctx.send("The message provided isn't valid.")
-        except discord.NotFound:
-            await ctx.send("Message not found.")
-        except discord.Forbidden:
-            await ctx.send("I don't have permission to access the message.")
-        except discord.HTTPException as e:
-            await ctx.send("An error occurred while trying to fetch or edit the message.")
-
-    @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def shiftmention(self, ctx, role: discord.Role):
@@ -202,14 +174,6 @@ class ShiftManager(commands.Cog):
             await ctx.send("You do not have permission to use this command.")
         else:
             await self.send_error_log(error, ctx, "command_error")
-            print(f"Error: {error}")
-
-    @endshift.error
-    async def endshift_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please provide the message ID for the shift to end. Usage: `-endshift <msgID>`.")    
-        else:
-            await self.send_error_log(error, ctx, "endshift_error")
             print(f"Error: {error}")
 
 async def setup(bot):
