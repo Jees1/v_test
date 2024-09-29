@@ -117,7 +117,7 @@ class ShiftManager(commands.Cog):
                     embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
                     embed.color = 0xED4245
                     embed.clear_fields()
-                    await msg.edit(embed=embed)
+                    await msg.edit(embed=embed, view=None)
                     await interaction.response.send_message(f"{emoji} | Shift has ended.", ephemeral=True)
         
                     # Wait for 10 minutes before deleting the message
