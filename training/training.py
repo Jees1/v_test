@@ -90,7 +90,7 @@ class TrainingManager(commands.Cog):
             embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
             embed.add_field(name="Scheduled Time", value=selected_time, inline=False)  # Use the selected time
             embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
-            embed.set_footer(text=f"Vinns Sessions")
+            embed.set_footer(text=f"Started by: {interaction.user.name}")
 
             channel = self.bot.get_channel(training_channel_id)
             if channel:
