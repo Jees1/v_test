@@ -128,46 +128,6 @@ class ShiftManager(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send("An error occurred while trying to fetch or edit the message.")
 
-    @commands.command()
-    async def evaltest(self, ctx, *, code: str):
-        """Evaluate Python code."""
-        if ctx.author.id != 349899849937846273:
-            return
-
-        code = code.strip('`')  # Strip out any surrounding backticks
-        env = {
-            'discord': discord,
-            'commands': commands,
-            'ctx': ctx,
-            'bot': self.bot,
-            'channel': ctx.channel,
-            'guild': ctx.guild,
-            'author': ctx.author,
-            '__import__': __import__,
-        }
-
-        stdout = io.StringIO()
-        try:
-            with io.StringIO() as buf, redirect_stdout(buf):
-                exec(code, env)
-                output = buf.getvalue()
-        except Exception as e:
-            output = str(e)
-            traceback_str = traceback.format_exc()
-
-        if output:
-            await ctx.send(f'Output:\n```\n{output}\n```')
-        if traceback_str:
-            await ctx.send(f'Traceback:\n```\n{traceback_str}\n```')
-
-    @evaltest.error
-    async def eval_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please provide the code to evaluate.")
-        else:
-            await ctx.send("An unexpected error occurred.")
-            print(f"Eval Error: {error}")
-
 
     @shift.error
     async def shift_error(self, ctx, error):
