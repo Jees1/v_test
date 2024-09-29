@@ -144,9 +144,8 @@ class TrainingManager(commands.Cog):
     
                     # Create a new view with the updated buttons
                     new_view = discord.ui.View()
-                    new_view.add_item(interaction.message.components[0].children[0])  # Start button
-                    new_view.add_item(interaction.message.components[0].children[1])  # Lock button
-                    new_view.add_item(interaction.message.components[0].children[2])  # End button
+                    for item in interaction.message.components[0].children:
+                        new_view.add_item(item)  # Add all items from the original view
     
                     await msg.edit(embed=embed, view=new_view)  # Edit the message with the new view
                     await interaction.followup.send(f"{emoji} | Training has started!", ephemeral=True)
@@ -154,6 +153,7 @@ class TrainingManager(commands.Cog):
                     await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+
 
     async def lock_training_callback(self, interaction, message_id):
         ctx = await self.bot.get_context(interaction.message)
