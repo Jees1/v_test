@@ -139,6 +139,11 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("No active training found for this server.", ephemeral=True)
             return
     
+        # Check if the user has an allowed role
+        if not any(role.id in ALLOWED_ROLES for role in ctx.author.roles):
+            await interaction.response.send_message("You can't do that.", ephemeral=True)
+            return
+    
         training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(training_channel_id)
         if not channel:
@@ -149,33 +154,30 @@ class TrainingManager(commands.Cog):
             msg = await channel.fetch_message(message_id)
             if msg.embeds and msg.author.id == self.bot.user.id:
                 embed = msg.embeds[0]
-                options = ["End Training", "Lock Training"]
-                action_select = discord.ui.Select(placeholder="Choose an action...", options=options)
+                action_buttons = discord.ui.View()
     
-                async def action_callback(interaction):
-                    selected_action = action_select.values[0]
-                    if selected_action == "End Training":
-                        await self.end_training_callback(interaction, msg.id)
-                    elif selected_action == "Lock Training":
-                        lock_time_unix = int(datetime.now(timezone.utc).timestamp())
-                        new_embed = discord.Embed(
-                            title="Training Locked",
-                            description=f"The training session is now locked. Time locked: <t:{lock_time_unix}>",
-                            color=0xED4245
-                        )
-                        new_embed.set_footer(text=embed.footer.text)
-
-                        try:
-                            await msg.edit(embed=new_embed)
-                            await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
-                        except Exception as e:
-                            await self.send_error_log(f"Error editing embed during Lock Training: {str(e)}", ctx, "Error Editing Embed")
-                            await interaction.response.send_message("An error occurred while trying to update the training status.", ephemeral=True)
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
     
-                action_select.callback = action_callback
-                view = discord.ui.View()
-                view.add_item(action_select)
-                await interaction.response.send_message("Select an action:", view=view, ephemeral=True)
+                async def end_training_callback(interaction):
+                    await self.end_training_callback(interaction, msg.id)
+    
+                async def lock_training_callback(interaction):
+                    lock_time_unix = int(datetime.now(timezone.utc).timestamp())
+                    embed.title = "Training Locked"
+                    embed.description = f"The training session is now locked. Time locked: <t:{lock_time_unix}>"
+                    embed.set_field_at(1, name="Session Status", value="Training Locked", inline=False)
+                    embed.color = 0xED4245  # Red for locked status
+                    await msg.edit(embed=embed, view=None)  # Remove buttons after locking
+                    await interaction.response.send_message(f"{emoji} | Training has been locked.", ephemeral=True)
+    
+                end_button.callback = end_training_callback
+                lock_button.callback = lock_training_callback
+    
+                action_buttons.add_item(end_button)
+                action_buttons.add_item(lock_button)
+    
+                await interaction.response.send_message("Choose an action:", view=action_buttons, ephemeral=True)
             else:
                 await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
         except discord.NotFound:
