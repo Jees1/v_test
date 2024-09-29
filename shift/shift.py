@@ -2,6 +2,7 @@
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone
+import asyncio
 
 from core import checks
 from core.models import DummyMessage, PermissionLevel
@@ -91,13 +92,13 @@ class ShiftManager(commands.Cog):
         if ctx.guild.id not in self.shift_start_times:
             await ctx.send("No active shift found for this server.")
             return
-
+    
         shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(shift_channel_id)
         if not channel:
             await ctx.send("The shift channel could not be found.")
             return
-
+    
         try:
             msg = await channel.fetch_message(message_id)
             if msg.embeds:
@@ -108,6 +109,11 @@ class ShiftManager(commands.Cog):
                 embed.clear_fields()
                 await msg.edit(embed=embed)
                 await ctx.send(f"Shift with message ID {message_id} has been ended.")
+    
+                # Wait for 15 minutes before deleting the message
+                await asyncio.sleep(20)  # 900 seconds = 15 minutes
+                await msg.delete()  # Delete the edited message after 15 minutes
+                
             else:
                 await ctx.send("The message does not contain an embed.")
         except discord.NotFound:
