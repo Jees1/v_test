@@ -59,7 +59,7 @@ class TrainingManager(commands.Cog):
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
 
-    @commands.command(aliases=['s'])
+    @commands.command(aliases=['train'])
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def training(self, ctx):
@@ -102,7 +102,7 @@ class TrainingManager(commands.Cog):
         self.training_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"{emoji} | Training messages will now be sent in {channel.mention}.")
 
-    @commands.command(aliases=['es'])
+    @commands.command(aliases=['et'])
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
     async def endtraining(self, ctx, message_id: int):
