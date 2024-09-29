@@ -205,51 +205,51 @@ class TrainingManager(commands.Cog):
             await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
 
-async def end_training_callback(self, interaction, message_id):
-    ctx = await self.bot.get_context(interaction.message)
-
-    if ctx.guild.id not in self.training_start_times:
-        await interaction.response.send_message("No active training found for this server.", ephemeral=True)
-        return
-
-    training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
-    channel = self.bot.get_channel(training_channel_id)
-    if not channel:
-        await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
-        return
-
-    try:
-        msg = await channel.fetch_message(message_id)
-        if msg.embeds and msg.author.id == self.bot.user.id:
-            embed = msg.embeds[0]
-            host_field = embed.fields[0].value
-            embed.title = "Training Ended"
-            embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
-            embed.color = 0xED4245
-
-            # Create a new view and disable all buttons
-            new_view = discord.ui.View()
-            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
-            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
-
-            # Add disabled buttons to the view
-            new_view.add_item(start_button)
-            new_view.add_item(lock_button)
-            new_view.add_item(end_button)
-
-            # Acknowledge the interaction first
-            await interaction.response.send_message("Training has ended!", ephemeral=True)
-            await msg.edit(embed=embed, view=new_view)
-
-            # Optionally, delete the message after a delay if needed
-            await asyncio.sleep(600)  # Wait 10 minutes before deleting
-            await msg.delete()
-        else:
-            await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
-    except Exception as e:
-        await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
-        await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
+    async def end_training_callback(self, interaction, message_id):
+        ctx = await self.bot.get_context(interaction.message)
+    
+        if ctx.guild.id not in self.training_start_times:
+            await interaction.response.send_message("No active training found for this server.", ephemeral=True)
+            return
+    
+        training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        channel = self.bot.get_channel(training_channel_id)
+        if not channel:
+            await interaction.response.send_message("The training channel could not be found.", ephemeral=True)
+            return
+    
+        try:
+            msg = await channel.fetch_message(message_id)
+            if msg.embeds and msg.author.id == self.bot.user.id:
+                embed = msg.embeds[0]
+                host_field = embed.fields[0].value
+                embed.title = "Training Ended"
+                embed.description = f"The training hosted by {host_field} has just ended. Thank you for attending!"
+                embed.color = 0xED4245
+    
+                # Create a new view and disable all buttons
+                new_view = discord.ui.View()
+                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
+    
+                # Add disabled buttons to the view
+                new_view.add_item(start_button)
+                new_view.add_item(lock_button)
+                new_view.add_item(end_button)
+    
+                # Acknowledge the interaction first
+                await interaction.response.send_message("Training has ended!", ephemeral=True)
+                await msg.edit(embed=embed, view=new_view)
+    
+                # Optionally, delete the message after a delay if needed
+                await asyncio.sleep(600)  # Wait 10 minutes before deleting
+                await msg.delete()
+            else:
+                await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+        except Exception as e:
+            await self.send_error_log(f"Unexpected error: {str(e)}", ctx, "Unexpected Error")
+            await interaction.response.send_message("An unexpected error occurred.", ephemeral=True)
 
 
 
