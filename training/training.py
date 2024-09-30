@@ -56,6 +56,10 @@ class TrainingManager(commands.Cog):
         select = discord.ui.Select(placeholder="Select a time...", options=[discord.SelectOption(label=time) for time in time_options])
 
         async def select_callback(interaction):
+            if interaction.user != ctx.author:
+                await interaction.response.send_message("You are not authorized to use this menu.", ephemeral=True)
+                return
+
             selected_time = select.values[0]
             await interaction.response.defer()  # Acknowledge the interaction
 
@@ -104,7 +108,6 @@ class TrainingManager(commands.Cog):
         role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
-        start_time_unix = int(datetime.now(timezone.utc).timestamp())
 
         embed = discord.Embed(
             title="Training Session",
@@ -113,7 +116,7 @@ class TrainingManager(commands.Cog):
         )
         embed.add_field(name="Host", value=host_mention, inline=False)
         embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
-        embed.add_field(name="Session Status", value=f"Waiting for the training to start...", inline=False)
+        embed.add_field(name="Session Status", value="Waiting for the training to start...", inline=False)
         embed.set_footer(text=f"Scheduled by: {ctx.author.name}")
 
         channel = self.bot.get_channel(training_channel_id)
@@ -130,6 +133,10 @@ class TrainingManager(commands.Cog):
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
 
             async def start_callback(interaction: discord.Interaction):
+                if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
+                    await interaction.response.send_message("You do not have permission to start the training.", ephemeral=True)
+                    return
+
                 start_time_unix = int(datetime.now(timezone.utc).timestamp())
                 embed.set_field_at(2, name="Session Status", value=f"Started <t:{start_time_unix}:R>")  # Update session status
                 start_button.disabled = True
@@ -141,6 +148,10 @@ class TrainingManager(commands.Cog):
                 await interaction.response.defer()  # Acknowledge the interaction
 
             async def lock_callback(interaction: discord.Interaction):
+                if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
+                    await interaction.response.send_message("You do not have permission to lock the training.", ephemeral=True)
+                    return
+
                 lock_time_unix = int(datetime.now(timezone.utc).timestamp())
                 embed.set_footer(text=f"Locked by: {ctx.author.name} | {embed.footer.text}")
                 embed.title = "🔒 | Training Locked"
@@ -151,10 +162,14 @@ class TrainingManager(commands.Cog):
                 await interaction.response.defer()  # Acknowledge the interaction
 
             async def end_callback(interaction: discord.Interaction):
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600 # 600 = 10 mins
+                if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
+                    await interaction.response.send_message("You do not have permission to end the training.", ephemeral=True)
+                    return
+
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600  # 600 = 10 mins
                 embed.title = "Training Ended"
                 embed.set_footer(text=f"Ended by: {ctx.author.name} | {embed.footer.text}")
-                embed.description = f"The training session hosted by {host_mention} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
+                embed.description = f"The training session hosted by {ctx.author.mention} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
                 embed.clear_fields()
                 embed.color = 0xF04747
                 await msg.edit(embed=embed, view=None)
@@ -196,7 +211,7 @@ class TrainingManager(commands.Cog):
     Allowed Roles: {ALLOWED_ROLES}
     Admin Users: {ADMIN_USERS}
     ```"""
-    
+        
         await ctx.send(config_info)
 
 # Async function to set up the cog
