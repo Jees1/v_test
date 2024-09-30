@@ -186,17 +186,31 @@ class TrainingManager(commands.Cog):
             await ctx.send("The specified channel could not be found.")
 
     def get_unix_time_from_selected_time(self, selected_time):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)  # Current time in UTC
+        est_offset = timedelta(hours=-5)  # EST is UTC-5
+        edt_offset = timedelta(hours=-4)  # EDT is UTC-4
+    
+        # Determine whether it's currently Standard Time or Daylight Saving Time
+        # For simplicity, we check if the date is in the summer months for EDT
+        if now.month >= 3 and now.month <= 11:  # From March to November
+            current_offset = edt_offset
+        else:
+            current_offset = est_offset
+    
         time_mapping = {
-            "12 AM EST / 5 AM BST": now.replace(hour=0, minute=0, second=0, microsecond=0),
-            "5 AM EST / 10 AM BST": now.replace(hour=5, minute=0, second=0, microsecond=0),
-            "10 AM EST / 3 PM BST": now.replace(hour=10, minute=0, second=0, microsecond=0),
-            "3 PM EST / 8 PM BST": now.replace(hour=15, minute=0, second=0, microsecond=0),
-            "8 PM EST / 1 AM BST": now.replace(hour=20, minute=0, second=0, microsecond=0),
+            "12 AM EST / 5 AM BST": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - current_offset,
+            "5 AM EST / 10 AM BST": datetime.now().replace(hour=5, minute=0, second=0, microsecond=0) - current_offset,
+            "10 AM EST / 3 PM BST": datetime.now().replace(hour=10, minute=0, second=0, microsecond=0) - current_offset,
+            "3 PM EST / 8 PM BST": datetime.now().replace(hour=15, minute=0, second=0, microsecond=0) - current_offset,
+            "8 PM EST / 1 AM BST": datetime.now().replace(hour=20, minute=0, second=0, microsecond=0) - current_offset,
         }
     
+        selected_time_dt = time_mapping[selected_time]  # This is in local time
+    
+        # Convert the selected time to UTC
+        selected_time_dt = selected_time_dt + current_offset
+    
         # Check if the selected time is in the past for today
-        selected_time_dt = time_mapping[selected_time]
         if now > selected_time_dt:
             # If the selected time is already passed today, set it for tomorrow
             selected_time_dt += timedelta(days=1)
