@@ -68,7 +68,7 @@ class ShiftManager(commands.Cog):
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
         start_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp())
-
+    
         embed = discord.Embed(
             title="Shift",
             description=f"A shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
@@ -78,16 +78,36 @@ class ShiftManager(commands.Cog):
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
         embed.set_footer(text=f"Vinns Sessions")
-
+    
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
             button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
-            view = discord.ui.View()
+    
+            # Custom view with a timeout of 3 hours (10800 seconds)
+            view = discord.ui.View(timeout=10800)  # 3 hours
             view.add_item(button)
-
+    
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
+    
+            # Set up button interaction callback
             button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id)
+    
+            # Timeout handling for the view (ends shift automatically if not clicked within 3 hours)
+            async def on_timeout():
+                # Simulate an "interaction" and pass it to end the shift after timeout
+                class TimeoutInteraction:
+                    def __init__(self, user):
+                        self.user = user
+                        self.guild = ctx.guild
+                        self.channel = ctx.channel
+    
+                # Simulating the author as the user who triggered the end
+                fake_interaction = TimeoutInteraction(ctx.author)
+                await self.end_shift_callback(fake_interaction, msg.id)
+    
+            view.on_timeout = on_timeout
+    
             await ctx.send(f"{emoji} | Shift has been started!")
         else:
             await ctx.send("The specified channel could not be found.")
