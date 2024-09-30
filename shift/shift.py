@@ -117,8 +117,8 @@ class ShiftManager(commands.Cog):
                             await msg.delete()
                 except discord.NotFound:
                     # Handle the case where the message is already deleted
-                    # await ctx.send("The message was not found when trying to edit after timeout.")
-
+                    await send_error_log(self, "The message was not found when trying to edit after timeout.", "None", "End shift timeout")
+                    
             
             view.on_timeout = on_timeout
     
