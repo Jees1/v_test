@@ -35,7 +35,25 @@ class TrainingManager(commands.Cog):
         async def predicate(ctx):
             return ctx.author.id in ADMIN_USERS
         return commands.check(predicate)
-
+    def get_unix_time_from_selected_time(self, selected_time):
+        # Example implementation, adjust as needed
+        now = datetime.now(timezone.utc)
+        # Map time options to actual times
+        time_mapping = {
+            "12 AM EST / 5 AM BST": now.replace(hour=0, minute=0, second=0, microsecond=0),
+            "5 AM EST / 10 AM BST": now.replace(hour=5, minute=0, second=0, microsecond=0),
+            "10 AM EST / 3 PM BST": now.replace(hour=10, minute=0, second=0, microsecond=0),
+            "3 PM EST / 8 PM BST": now.replace(hour=15, minute=0, second=0, microsecond=0),
+            "8 PM EST / 1 AM BST": now.replace(hour=20, minute=0, second=0, microsecond=0),
+        }
+        
+        # Assuming you want to schedule for today or tomorrow depending on the current time
+        if now > time_mapping[selected_time]:
+            # If the selected time is already passed today, set it for tomorrow
+            time_mapping[selected_time] += timedelta(days=1)
+    
+        return int(time_mapping[selected_time].timestamp())
+    
     @commands.Cog.listener()
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
@@ -113,6 +131,8 @@ class TrainingManager(commands.Cog):
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
 
+        unix_time = self.get_unix_time_from_selected_time(selected_time)
+        
         embed = discord.Embed(
             title="Training Session",
             description=f"A training is being hosted at **{selected_time}**! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
@@ -120,7 +140,7 @@ class TrainingManager(commands.Cog):
         )
         embed.add_field(name="Host", value=host_mention, inline=False)
         embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
-        embed.add_field(name="Session Status", value="Waiting for the training to start...", inline=False)
+        embed.add_field(name="Session Status", value=f"Waiting for the host to start the training...\nScheduled to start <t:{unix_time}:R>", inline=False)
         embed.set_footer(text=f"Scheduled by: {ctx.author.name}")
 
         channel = self.bot.get_channel(training_channel_id)
@@ -169,9 +189,9 @@ class TrainingManager(commands.Cog):
                 if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
                     await interaction.response.send_message("You do not have permission to end the training.", ephemeral=True)
                     return
+                
                 await self.end_training(msg, embed, ctx.author.name, automatic=False)
                 await interaction.response.defer()  # Acknowledge the interaction
-                await interaction.response.send_message("okie", ephemeral=True)
                 
 
             start_button.callback = start_callback
