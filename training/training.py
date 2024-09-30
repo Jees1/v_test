@@ -178,8 +178,7 @@ class TrainingManager(commands.Cog):
             lock_button.callback = lock_callback
             end_button.callback = end_callback
 
-            view.on_timeout = lambda: asyncio.create_task(self.end_training(msg, embed, "The training session has timed out due to inactivity."))
-
+            view.on_timeout = lambda: asyncio.create_task(self.end_training(msg, embed, "The training session has timed out due to inactivity.", automatic=True))
             await ctx.send("Training session scheduled!")
         else:
             await ctx.send("The specified channel could not be found.")
