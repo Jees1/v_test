@@ -58,7 +58,7 @@ class TrainingManager(commands.Cog):
         async def select_callback(interaction):
             selected_time = select.values[0]
             await interaction.response.defer()  # Acknowledge the interaction
-
+        
             confirm_embed = discord.Embed(
                 title="Confirm Training Time",
                 description=f"Would you like to post the training message for **{selected_time}**?",
@@ -67,7 +67,7 @@ class TrainingManager(commands.Cog):
             confirm_view = discord.ui.View(timeout=60)  # Timeout after 60 seconds
             confirm_button = discord.ui.Button(label="Confirm", style=discord.ButtonStyle.success)
             cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.danger)
-
+        
             async def confirm_callback(interaction):
                 await interaction.response.send_message("Training message will be sent!", ephemeral=True)
                 await self.send_training_message(ctx, selected_time)
@@ -75,23 +75,24 @@ class TrainingManager(commands.Cog):
                 cancel_button.disabled = True
                 await interaction.message.edit(view=confirm_view)  # Update message to disable buttons
                 confirm_view.stop()  # Stop the view
-
+        
             async def cancel_callback(interaction):
                 await interaction.response.send_message("Training command cancelled.", ephemeral=True)
                 confirm_button.disabled = True
                 cancel_button.disabled = True
                 await interaction.message.edit(view=confirm_view)  # Update message to disable buttons
                 confirm_view.stop()  # Stop the view
-
+        
             confirm_button.callback = confirm_callback
             cancel_button.callback = cancel_callback
-
+        
             confirm_view.add_item(confirm_button)
             confirm_view.add_item(cancel_button)
-
+        
             confirm_view.on_timeout = lambda: [setattr(confirm_button, 'disabled', True), setattr(cancel_button, 'disabled', True)]
-
-            await ctx.send(embed=confirm_embed, view=confirm_view)
+        
+            await interaction.response.send_message(embed=confirm_embed, view=confirm_view)  # Use interaction.response to send the embed
+            
 
         select.callback = select_callback
 
