@@ -57,9 +57,11 @@ class TrainingManager(commands.Cog):
             if interaction.user != ctx.author:
                 await interaction.response.send_message("You are not authorized to use this menu.", ephemeral=True)
                 return
+            
             select.disabled = True
             selected_time = select.values[0]
             await interaction.response.defer()  # Acknowledge the interaction
+            await interaction.message.edit(view=view)
             
             confirm_embed = discord.Embed(
                 title="Confirm Training Time",
