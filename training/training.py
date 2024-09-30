@@ -10,7 +10,8 @@ ALLOWED_ROLES = [
     796317014209462332,
     686258158049558772,
     686257925815402660,
-    769203966004953118
+    769203966004953118,
+    686219247206137900
 ]
 
 ADMIN_USERS = [
@@ -168,10 +169,10 @@ class TrainingManager(commands.Cog):
                 if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
                     await interaction.response.send_message("You do not have permission to end the training.", ephemeral=True)
                     return
-                await interaction.response.send_message("okie", ephemeral=True)
-                await interaction.response.defer()  # Acknowledge the interaction
-                await interaction.response.send_message("twoo", ephemeral=True)
                 await self.end_training(msg, embed, ctx.author.name, automatic=False)
+                await interaction.response.defer()  # Acknowledge the interaction
+                await interaction.response.send_message("okie", ephemeral=True)
+                
 
             start_button.callback = start_callback
             lock_button.callback = lock_callback
