@@ -84,7 +84,7 @@ class ShiftManager(commands.Cog):
             button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
     
             # Custom view with a timeout of 3 hours (10800 seconds)
-            view = discord.ui.View(timeout=10)  # 3 hours
+            view = discord.ui.View(timeout=10)  # Change this to 10800 for production
             view.add_item(button)
     
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
@@ -95,48 +95,26 @@ class ShiftManager(commands.Cog):
     
             # Timeout handling for the view (ends shift automatically if not clicked within 3 hours)
             async def on_timeout():
-                try:
-                    # Fetch the message again to make sure it's the right one
-                    msg = await channel.fetch_message(msg.id)
-                    if msg.embeds and msg.author.id == self.bot.user.id:
-                        delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
-                        embed = msg.embeds[0]
-                        if embed.title == "Shift":
-                            host_field = embed.fields[0].value
-                            embed.title = "Shift Ended"
-                            embed.description = f"The shift hosted by {host_field} has just ended due to timeout. Thank you for attending!\n\nDeleting this message <t:{delete_time_unix}:R>"
-                            embed.color = 0xED4245
-                            embed.clear_fields()  # Clear the fields since the shift ended
-                            embed.set_footer(text=f"Ended by timeout")
+                # Simulating an interaction to end the shift after timeout
+                await self.end_shift_timeout(msg.id)
     
-                            await msg.edit(embed=embed, view=None)  # Remove the button view as well
-                            await ctx.send(f"{emoji} | Shift has ended automatically due to timeout.")
-                            
-                            # Wait for 10 minutes before deleting the message
-                            await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                            await msg.delete()
-                except discord.NotFound:
-                    # Handle the case where the message is already deleted
-                    await send_error_log(self, "The message was not found when trying to edit after timeout.", "None", "End shift timeout")
-                    
-            
             view.on_timeout = on_timeout
     
             await ctx.send(f"{emoji} | Shift has been started!")
         else:
             await ctx.send("The specified channel could not be found.")
-
-    async def end_shift_callback(self, interaction, message_id):
-        ctx = await self.bot.get_context(interaction.message)
-
+    
+    async def end_shift_timeout(self, message_id):
+        ctx = self.bot.get_context(message_id)
+    
         if ctx.guild.id not in self.shift_start_times:
-            await interaction.response.send_message("No active shift found for this server.", ephemeral=True)
+            print("No active shift found for this server.")
             return
     
         shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(shift_channel_id)
         if not channel:
-            await interaction.response.send_message("The shift channel could not be found.", ephemeral=True)
+            print("The shift channel could not be found.")
             return
     
         try:
@@ -150,24 +128,24 @@ class ShiftManager(commands.Cog):
                     embed.title = "Shift Ended"
                     embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
                     embed.color = 0xED4245
-                    embed.set_footer(text=f"Ended by: {interaction.user.name}")
+                    embed.set_footer(text=f"Ended automatically after timeout.")
                     embed.clear_fields()
                     await msg.edit(embed=embed, view=None)
-                    await interaction.response.send_message(f"{emoji} | Shift has ended.", ephemeral=True)
-        
+                    print(f"{emoji} | Shift has ended automatically.")
+    
                     # Wait for 10 minutes before deleting the message
                     await asyncio.sleep(600)  # 600 seconds = 10 minutes
                     await msg.delete()  # Delete the edited message after 10 minutes
                 else:
-                    await interaction.response.send_message("The message provided isn't valid.", ephemeral=True)
+                    print("The message provided isn't valid.")
             else:
-                await interaction.response.send_message("The message provided does not contain an embed or isn't valid.", ephemeral=True)
+                print("The message provided does not contain an embed or isn't valid.")
         except discord.NotFound:
-            await interaction.response.send_message("Message not found.", ephemeral=True)
+            print("Message not found.")
         except discord.Forbidden:
-            await interaction.response.send_message("I don't have permission to access the message.", ephemeral=True)
+            print("I don't have permission to access the message.")
         except discord.HTTPException as e:
-            await interaction.response.send_message("An error occurred while trying to fetch or edit the message.", ephemeral=True)
+            print("An error occurred while trying to fetch or edit the message.")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
