@@ -135,12 +135,13 @@ class TrainingManager(commands.Cog):
                 end_button.disabled = False
                 lock_button.disabled = False
                 embed.color = self.bot.main_color
+                embed.set_footer(text=f"Started by: {ended_by_user.name}")
                 await msg.edit(embed=embed, view=view)
                 await interaction.response.defer()  # Acknowledge the interaction
 
             async def lock_callback(interaction: discord.Interaction):
                 lock_time_unix = int(datetime.now(timezone.utc).timestamp())
-                
+                embed.set_footer(text=f"Locked by: {ended_by_user.name}")
                 embed.title = "🔒 | Training Locked"
                 embed.set_field_at(2, name="Session Status", value=f"Locked <t:{lock_time_unix}:R>")  # Update session status
                 lock_button.disabled = True
@@ -150,6 +151,7 @@ class TrainingManager(commands.Cog):
             async def end_callback(interaction: discord.Interaction):
                 delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600 # 600 = 10 mins
                 embed.title = "Training Ended"
+                embed.set_footer(text=f"Ended by: {ended_by_user.name}")
                 embed.description = f"The training session hosted by {host_mention} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
                 embed.clear_fields()
                 embed.color = 0xF04747
