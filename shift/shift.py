@@ -95,16 +95,29 @@ class ShiftManager(commands.Cog):
     
             # Timeout handling for the view (ends shift automatically if not clicked within 3 hours)
             async def on_timeout():
-                # Simulate an "interaction" and pass it to end the shift after timeout
-                class TimeoutInteraction:
-                    def __init__(self, user):
-                        self.user = user
-                        self.guild = ctx.guild
-                        self.channel = ctx.channel
+                try:
+                    # Fetch the message again to make sure it's the right one
+                    msg = await channel.fetch_message(msg.id)
+                    if msg.embeds and msg.author.id == self.bot.user.id:
+                        delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
+                        embed = msg.embeds[0]
+                        if embed.title == "Shift":
+                            host_field = embed.fields[0].value
+                            embed.title = "Shift Ended"
+                            embed.description = f"The shift hosted by {host_field} has just ended due to timeout. Thank you for attending!\n\nDeleting this message <t:{delete_time_unix}:R>"
+                            embed.color = 0xED4245
+                            embed.clear_fields()  # Clear the fields since the shift ended
+                            embed.set_footer(text=f"Ended by timeout")
     
-                # Simulating the author as the user who triggered the end
-                fake_interaction = TimeoutInteraction(ctx.author)
-                await self.end_shift_callback(fake_interaction, msg.id)
+                            await msg.edit(embed=embed, view=None)  # Remove the button view as well
+                            await ctx.send(f"{emoji} | Shift has ended automatically due to timeout.")
+                            
+                            # Wait for 10 minutes before deleting the message
+                            await asyncio.sleep(600)  # 600 seconds = 10 minutes
+                            await msg.delete()
+                except discord.NotFound:
+                    # Handle the case where the message is already deleted
+                    # await ctx.send("The message was not found when trying to edit after timeout.")
     
             view.on_timeout = on_timeout
     
