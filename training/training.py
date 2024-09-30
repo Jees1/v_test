@@ -168,7 +168,7 @@ class TrainingManager(commands.Cog):
                 if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
                     await interaction.response.send_message("You do not have permission to end the training.", ephemeral=True)
                     return
-            
+                await interaction.response.defer()  # Acknowledge the interaction
                 await self.end_training(msg, embed, ctx.author.name, automatic=False)
 
             start_button.callback = start_callback
