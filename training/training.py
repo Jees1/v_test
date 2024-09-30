@@ -108,7 +108,7 @@ class TrainingManager(commands.Cog):
 
         embed = discord.Embed(
             title="Training Session",
-            description=f"A training is being hosted at **{selected_time}! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
+            description=f"A training is being hosted at **{selected_time}**! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
             color=0x00FF00
         )
         embed.add_field(name="Host", value=host_mention, inline=False)
@@ -130,7 +130,7 @@ class TrainingManager(commands.Cog):
 
             async def start_callback(interaction: discord.Interaction):
                 start_time_unix = int(datetime.now(timezone.utc).timestamp())
-                embed.set_field_at(1, name="Session Status", value=f"Started <t:{start_time_unix}:R>")  # Update session status
+                embed.set_field_at(2, name="Session Status", value=f"Started <t:{start_time_unix}:R>")  # Update session status
                 start_button.disabled = True
                 end_button.disabled = False
                 lock_button.disabled = False
@@ -139,18 +139,24 @@ class TrainingManager(commands.Cog):
                 await interaction.response.defer()  # Acknowledge the interaction
 
             async def lock_callback(interaction: discord.Interaction):
+                lock_time_unix = int(datetime.now(timezone.utc).timestamp())
+                
                 embed.title = "🔒 | Training Locked"
-                embed.set_field_at(1, name="Session Status", value="Locked")  # Update session status
+                embed.set_field_at(2, name="Session Status", value=f"Locked <t:{lock_time_unix}:R>")  # Update session status
                 lock_button.disabled = True
                 await msg.edit(embed=embed, view=view)
                 await interaction.response.defer()  # Acknowledge the interaction
 
             async def end_callback(interaction: discord.Interaction):
+                delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600 # 600 = 10 mins
                 embed.title = "Training Ended"
-                embed.set_field_at(1, name="Session Status", value="The training session has ended. Thank you for participating!")  # Update session status
+                embed.description = f"The training session hosted by {host_mention} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
+                embed.clear_fields()
                 embed.color = 0xF04747
                 await msg.edit(embed=embed, view=None)
                 await interaction.response.defer()  # Acknowledge the interaction
+                await asyncio.sleep(600)
+                await msg.delete()
 
             start_button.callback = start_callback
             lock_button.callback = lock_callback
