@@ -118,7 +118,8 @@ class ShiftManager(commands.Cog):
                 except discord.NotFound:
                     # Handle the case where the message is already deleted
                     # await ctx.send("The message was not found when trying to edit after timeout.")
-    
+
+            
             view.on_timeout = on_timeout
     
             await ctx.send(f"{emoji} | Shift has been started!")
