@@ -68,7 +68,7 @@ class ShiftManager(commands.Cog):
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
         start_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp())
-    
+
         embed = discord.Embed(
             title="Shift",
             description=f"A shift is currently being hosted at the hotel! Come to the hotel for a nice and comfy room! Active staff may get a chance of promotion.",
@@ -78,74 +78,79 @@ class ShiftManager(commands.Cog):
         embed.add_field(name="Session Status", value=f"Started <t:{start_time_unix}:R>", inline=False)
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
         embed.set_footer(text=f"Vinns Sessions")
-    
+
         channel = self.bot.get_channel(shift_channel_id)
         if channel:
+            # Create a button for ending the shift manually
             button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
-    
-            # Custom view with a timeout of 3 hours (10800 seconds)
-            view = discord.ui.View(timeout=10)  # Change this to 10800 for production
+
+            # Create a view with a timeout of 3 hours (10800 seconds). We'll use 10 seconds for testing.
+            view = discord.ui.View(timeout=10)  # Change to 10800 for 3 hours
             view.add_item(button)
-    
+
+            # Send the shift announcement
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
             self.shift_start_times[ctx.guild.id] = (datetime.now(timezone.utc), msg.id)
-    
-            # Set up button interaction callback
-            button.callback = lambda interaction: self.end_shift_callback(interaction, msg.id)
-    
-            # Timeout handling for the view (ends shift automatically if not clicked within 3 hours)
-            async def on_timeout():
-                # Simulating an interaction to end the shift after timeout
-                await self.end_shift_timeout(msg.id)
-    
-            view.on_timeout = on_timeout
-    
-            await ctx.send(f"{emoji} | Shift has been started!")
+
+            # Button callback for manually ending the shift
+            async def button_callback(interaction: discord.Interaction):
+                await self.end_shift(ctx, msg, interaction.user)
+
+            button.callback = button_callback
+
+            # Handle the timeout (automatic shift end)
+            async def view_timeout():
+                await self.end_shift(ctx, msg, None)
+
+            view.on_timeout = view_timeout
+
+            await ctx.send(f"Shift has been started!")
+
         else:
             await ctx.send("The specified channel could not be found.")
+
     
-    async def end_shift_timeout(self, message_id):
-        ctx = self.bot.get_context(message_id)
-    
-        if ctx.guild.id not in self.shift_start_times:
-            print("No active shift found for this server.")
-            return
-    
+    async def end_shift(self, ctx, msg, ended_by_user):
         shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
         channel = self.bot.get_channel(shift_channel_id)
         if not channel:
             print("The shift channel could not be found.")
             return
-    
+
         try:
-            msg = await channel.fetch_message(message_id)
-            if msg.embeds and msg.author.id == 738395338393518222:
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 600 seconds = 10 minutes
-                embed = msg.embeds[0]
+            # Fetch the message we want to edit
+            original_msg = await channel.fetch_message(msg.id)
+            if original_msg.embeds and original_msg.author.id == self.bot.user.id:
+                embed = original_msg.embeds[0]
                 
+                # Update the embed to indicate the shift has ended
                 if embed.title == "Shift":
                     host_field = embed.fields[0].value
+                    delete_time_unix = int(datetime.now(timezone.utc).timestamp() + 600)  # 10 minutes until message deletion
+
                     embed.title = "Shift Ended"
                     embed.description = f"The shift hosted by {host_field} has just ended. Thank you for attending! We appreciate your presence and look forward to seeing you at future shifts.\n\nDeleting this message <t:{delete_time_unix}:R>"
                     embed.color = 0xED4245
-                    embed.set_footer(text=f"Ended automatically after timeout.")
+                    if ended_by_user:
+                        embed.set_footer(text=f"Ended by: {ended_by_user.name}")
+                    else:
+                        embed.set_footer(text="Ended automatically after timeout.")
                     embed.clear_fields()
-                    await msg.edit(embed=embed, view=None)
-                    print(f"{emoji} | Shift has ended automatically.")
-    
-                    # Wait for 10 minutes before deleting the message
+
+                    # Edit the message with the updated embed
+                    await original_msg.edit(embed=embed, view=None)
+
+                    # Wait 10 minutes before deleting the message
                     await asyncio.sleep(600)  # 600 seconds = 10 minutes
-                    await msg.delete()  # Delete the edited message after 10 minutes
+                    await original_msg.delete()
                 else:
                     print("The message provided isn't valid.")
-            else:
-                print("The message provided does not contain an embed or isn't valid.")
         except discord.NotFound:
             print("Message not found.")
         except discord.Forbidden:
             print("I don't have permission to access the message.")
         except discord.HTTPException as e:
-            print("An error occurred while trying to fetch or edit the message.")
+            print(f"An error occurred while trying to fetch or edit the message: {e}")
 
     @commands.command()
     @checks.has_permissions(PermissionLevel.OWNER)
