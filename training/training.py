@@ -64,22 +64,26 @@ class TrainingManager(commands.Cog):
                 description=f"Would you like to post the training message for **{selected_time}**?",
                 color=0x00FF00
             )
-            confirm_view = discord.ui.View()
+            confirm_view = discord.ui.View(timeout=60)  # Timeout after 60 seconds
             confirm_button = discord.ui.Button(label="Confirm", style=discord.ButtonStyle.success)
             cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.danger)
 
             async def confirm_callback(interaction):
                 await interaction.response.send_message("Training message will be sent!", ephemeral=True)
                 await self.send_training_message(ctx, selected_time)
+                confirm_view.stop()  # Stop the view, which will disable the buttons
 
             async def cancel_callback(interaction):
                 await interaction.response.send_message("Training command cancelled.", ephemeral=True)
+                confirm_view.stop()  # Stop the view, which will disable the buttons
 
             confirm_button.callback = confirm_callback
             cancel_button.callback = cancel_callback
 
             confirm_view.add_item(confirm_button)
             confirm_view.add_item(cancel_button)
+
+            confirm_view.on_timeout = lambda: [confirm_button.disable(), cancel_button.disable()]
 
             await ctx.send(embed=confirm_embed, view=confirm_view)
 
