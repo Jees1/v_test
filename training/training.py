@@ -84,7 +84,7 @@ class TrainingManager(commands.Cog):
             if channel:
                 view = discord.ui.View()
 
-                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success)
+                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, persistent=True)
                 view.add_item(start_button)
 
                 async def start_training_callback(interaction):
@@ -92,7 +92,7 @@ class TrainingManager(commands.Cog):
 
                 start_button.callback = start_training_callback
 
-                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True, persistent=True)
                 view.add_item(lock_button)
 
                 async def lock_training_callback(interaction):
@@ -100,7 +100,7 @@ class TrainingManager(commands.Cog):
 
                 lock_button.callback = lock_training_callback
 
-                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True, persistent=True)
                 view.add_item(end_button)
 
                 async def end_training_callback(interaction):
@@ -142,8 +142,8 @@ class TrainingManager(commands.Cog):
             # Update button states after training starts
             view = discord.ui.View()
             #start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
-            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, persistent=True)
+            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, persistent=True)
             #view.add_item(start_button)
             view.add_item(lock_button)
             view.add_item(end_button)
@@ -190,9 +190,9 @@ class TrainingManager(commands.Cog):
     
             # Disable the buttons
             view = discord.ui.View()
-            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
-            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True, persistent=True)
+            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True, persistent=True)
+            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, persistent=True)
             view.add_item(start_button)
             view.add_item(lock_button)
             view.add_item(end_button)
@@ -242,9 +242,9 @@ class TrainingManager(commands.Cog):
     
             # Disable all buttons
             view = discord.ui.View()
-            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
-            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
+            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True, persistent=True)
+            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True, persistent=True)
+            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True, persistent=True)
             view.add_item(start_button)
             view.add_item(lock_button)
             view.add_item(end_button)
