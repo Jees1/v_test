@@ -71,11 +71,17 @@ class TrainingManager(commands.Cog):
             async def confirm_callback(interaction):
                 await interaction.response.send_message("Training message will be sent!", ephemeral=True)
                 await self.send_training_message(ctx, selected_time)
-                confirm_view.stop()  # Stop the view, which will disable the buttons
+                confirm_button.disabled = True
+                cancel_button.disabled = True
+                await ctx.send(embed=confirm_embed, view=confirm_view)  # Update message to disable buttons
+                confirm_view.stop()  # Stop the view
 
             async def cancel_callback(interaction):
                 await interaction.response.send_message("Training command cancelled.", ephemeral=True)
-                confirm_view.stop()  # Stop the view, which will disable the buttons
+                confirm_button.disabled = True
+                cancel_button.disabled = True
+                await ctx.send(embed=confirm_embed, view=confirm_view)  # Update message to disable buttons
+                confirm_view.stop()  # Stop the view
 
             confirm_button.callback = confirm_callback
             cancel_button.callback = cancel_callback
@@ -83,7 +89,7 @@ class TrainingManager(commands.Cog):
             confirm_view.add_item(confirm_button)
             confirm_view.add_item(cancel_button)
 
-            confirm_view.on_timeout = lambda: [confirm_button.disable(), cancel_button.disable()]
+            confirm_view.on_timeout = lambda: [setattr(confirm_button, 'disabled', True), setattr(cancel_button, 'disabled', True)]
 
             await ctx.send(embed=confirm_embed, view=confirm_view)
 
