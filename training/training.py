@@ -114,7 +114,6 @@ class TrainingManager(commands.Cog):
         host_mention = ctx.author.mention
 
         # Convert selected_time to Unix time
-        unix_time = self.get_unix_time_from_selected_time(selected_time)
 
         embed = discord.Embed(
             title="Training Session",
@@ -123,7 +122,7 @@ class TrainingManager(commands.Cog):
         )
         embed.add_field(name="Host", value=host_mention, inline=False)
         embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
-        embed.add_field(name="Session Status", value=f"Waiting for the host to start the training...\nScheduled to start <t:{unix_time}:R>", inline=False)
+        embed.add_field(name="Session Status", value=f"Waiting for the host to start the training...", inline=False)
         embed.set_footer(text=f"Scheduled by: {ctx.author.name}")
 
         channel = self.bot.get_channel(training_channel_id)
@@ -184,26 +183,6 @@ class TrainingManager(commands.Cog):
             await ctx.send("Training session scheduled!")
         else:
             await ctx.send("The specified channel could not be found.")
-
-    def get_unix_time_from_selected_time(self, selected_time):
-        now = datetime.now(timezone.utc)  # Current time in UTC
-        est_offset = timedelta(hours=-5)  # EST is UTC-5
-        edt_offset = timedelta(hours=-4)  # EDT is UTC-4
-
-        # Determine if currently in Daylight Saving Time (DST)
-        if now.month >= 3 and now.month <= 11:
-            current_offset = edt_offset
-        else:
-            current_offset = est_offset
-
-        time_mapping = {
-            "12 AM EST / 5 AM BST": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - current_offset,
-            "5 AM EST / 10 AM BST": datetime.now().replace(hour=5, minute=0, second=0, microsecond=0) - current_offset,
-            "10 AM EST / 3 PM BST": datetime.now().replace(hour=10, minute=0, second=0, microsecond=0) - current_offset,
-            "3 PM EST / 8 PM BST": datetime.now().replace(hour=15, minute=0, second=0, microsecond=0) - current_offset,
-            "8 PM EST / 1 AM BST": datetime.now().replace(hour=20, minute=0, second=0, microsecond=0) - current_offset,
-        }
-
         selected_time_dt = time_mapping[selected_time]  # This is in local time
         selected_time_dt = selected_time_dt + current_offset  # Convert to UTC
 
