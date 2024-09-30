@@ -35,24 +35,7 @@ class TrainingManager(commands.Cog):
         async def predicate(ctx):
             return ctx.author.id in ADMIN_USERS
         return commands.check(predicate)
-    def get_unix_time_from_selected_time(self, selected_time):
-        # Example implementation, adjust as needed
-        now = datetime.now(timezone.utc)
-        # Map time options to actual times
-        time_mapping = {
-            "12 AM EST / 5 AM BST": now.replace(hour=0, minute=0, second=0, microsecond=0),
-            "5 AM EST / 10 AM BST": now.replace(hour=5, minute=0, second=0, microsecond=0),
-            "10 AM EST / 3 PM BST": now.replace(hour=10, minute=0, second=0, microsecond=0),
-            "3 PM EST / 8 PM BST": now.replace(hour=15, minute=0, second=0, microsecond=0),
-            "8 PM EST / 1 AM BST": now.replace(hour=20, minute=0, second=0, microsecond=0),
-        }
-        
-        # Assuming you want to schedule for today or tomorrow depending on the current time
-        if now > time_mapping[selected_time]:
-            # If the selected time is already passed today, set it for tomorrow
-            time_mapping[selected_time] += timedelta(days=1)
     
-        return int(time_mapping[selected_time].timestamp())
     
     @commands.Cog.listener()
     async def on_ready(self):
@@ -217,6 +200,25 @@ class TrainingManager(commands.Cog):
         await msg.edit(embed=embed, view=None)
         await asyncio.sleep(600)
         await msg.delete()
+
+    def get_unix_time_from_selected_time(self, selected_time):
+        # Example implementation, adjust as needed
+        now = datetime.now(timezone.utc)
+        # Map time options to actual times
+        time_mapping = {
+            "12 AM EST / 5 AM BST": now.replace(hour=0, minute=0, second=0, microsecond=0),
+            "5 AM EST / 10 AM BST": now.replace(hour=5, minute=0, second=0, microsecond=0),
+            "10 AM EST / 3 PM BST": now.replace(hour=10, minute=0, second=0, microsecond=0),
+            "3 PM EST / 8 PM BST": now.replace(hour=15, minute=0, second=0, microsecond=0),
+            "8 PM EST / 1 AM BST": now.replace(hour=20, minute=0, second=0, microsecond=0),
+        }
+        
+        # Assuming you want to schedule for today or tomorrow depending on the current time
+        if now > time_mapping[selected_time]:
+            # If the selected time is already passed today, set it for tomorrow
+            time_mapping[selected_time] += timedelta(days=1)
+    
+        return int(time_mapping[selected_time].timestamp())
 
     @commands.command()
     @is_admin_user()
