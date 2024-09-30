@@ -132,6 +132,7 @@ class TrainingManager(commands.Cog):
                 start_button.disabled = True
                 end_button.disabled = False
                 lock_button.disabled = False
+                embed.color = self.bot.main_color
                 await msg.edit(embed=embed, view=view)
                 await interaction.response.defer()  # Acknowledge the interaction
 
@@ -145,6 +146,7 @@ class TrainingManager(commands.Cog):
             async def end_callback(interaction: discord.Interaction):
                 embed.title = "Training Ended"
                 embed.set_field_at(1, name="Session Status", value="The training session has ended. Thank you for participating!")  # Update session status
+                embed.color = 0xF04747
                 await msg.edit(embed=embed, view=None)
                 await interaction.response.defer()  # Acknowledge the interaction
 
