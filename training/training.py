@@ -40,7 +40,7 @@ class TrainingManager(commands.Cog):
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
 
-    @commands.command()
+    @commands.command(aliases=["train"])
     @is_allowed_role()
     async def training(self, ctx):
         time_options = [
