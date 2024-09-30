@@ -1,6 +1,10 @@
 import discord
 from discord.ext import commands
 from datetime import datetime, timezone
+import asyncio
+
+from core import checks
+from core.models import PermissionLevel
 
 ALLOWED_ROLES = [
     796317014209462332,
@@ -17,20 +21,12 @@ ADMIN_USERS = [
     349899849937846273
 ]
 
-emoji = "<:cow:1012643349150314496>"
-
 class TrainingManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.training_start_times = {}
         self.training_channel_ids = {}
         self.training_mention_roles = {}
-        self.locked_training_sessions = {}
-
-    async def send_error_log(self, error, ctx, error_type):
-        target_channel = self.bot.get_channel(836283712193953882)
-        if target_channel:
-            await target_channel.send(f"**Error:** {error}\n**Error Type:** `{error_type}`\n**Context:** {ctx}")
 
     def is_allowed_role():
         async def predicate(ctx):
@@ -42,9 +38,14 @@ class TrainingManager(commands.Cog):
             return ctx.author.id in ADMIN_USERS
         return commands.check(predicate)
 
-    @commands.command(aliases=['train'])
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print(f'Logged in as {self.bot.user}!')
+
+    @commands.command()
     @is_allowed_role()
     async def training(self, ctx):
+        # Step 2: Ask for time selection
         time_options = [
             "12 AM EST / 5 AM BST",
             "5 AM EST / 10 AM BST",
@@ -53,214 +54,98 @@ class TrainingManager(commands.Cog):
             "8 PM EST / 1 AM BST"
         ]
 
-        time_select = discord.ui.Select(
-            placeholder="Select the training time...",
-            options=[discord.SelectOption(label=time) for time in time_options]
-        )
+        # Create a dropdown menu for time selection
+        select = discord.ui.Select(placeholder="Select a time...", options=[discord.SelectOption(label=time) for time in time_options])
 
-        async def time_callback(interaction):
-            ctx.send(f"Selected Time: {time_select.values[0]}")
+        async def select_callback(interaction):
+            selected_time = select.values[0]
             await interaction.response.defer()
-            selected_time = time_select.values[0]
-            self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))
 
-            training_channel_id = ctx.channel.id
-            self.training_channel_ids[ctx.guild.id] = training_channel_id
-
-            role_id = self.training_mention_roles.get(ctx.guild.id, 738396997135892540)
-            session_ping = f"<@&{role_id}>"
-            host_mention = ctx.author.mention
-
-            embed = discord.Embed(
-                title="Training",
-                description="Training is being hosted! Join for a possible promotion.",
-                color=0x00ff00
+            # Step 3: Confirm time selection
+            confirm_embed = discord.Embed(
+                title="Confirm Training Time",
+                description=f"Would you like to post the training message for **{selected_time}**?",
+                color=0x00FF00
             )
-            embed.add_field(name="Host", value=host_mention, inline=False)
-            embed.add_field(name="Session Status", value="Waiting for the host to begin the training", inline=False)
-            embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
-            embed.add_field(name="Training Center Link", value="[Click here](https://www.roblox.com/games/4780049434/Vinns-Training-Center)", inline=False)
+            confirm_view = discord.ui.View()
+            confirm_button = discord.ui.Button(label="Confirm", style=discord.ButtonStyle.success)
+            cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.danger)
 
-            channel = self.bot.get_channel(training_channel_id)
-            if channel:
-                view = discord.ui.View()
+            async def confirm_callback(interaction):
+                await self.send_training_message(ctx, selected_time)
+                await interaction.response.send_message("Training message sent!", ephemeral=True)
 
-                start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, persistent=True)
-                view.add_item(start_button)
+            async def cancel_callback(interaction):
+                await interaction.response.send_message("Training command cancelled.", ephemeral=True)
 
-                async def start_training_callback(interaction):
-                    await self.start_training_callback(interaction, ctx.guild.id)
+            confirm_button.callback = confirm_callback
+            cancel_button.callback = cancel_callback
 
-                start_button.callback = start_training_callback
+            confirm_view.add_item(confirm_button)
+            confirm_view.add_item(cancel_button)
 
-                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True, persistent=True)
-                view.add_item(lock_button)
+            await ctx.send(embed=confirm_embed, view=confirm_view)
 
-                async def lock_training_callback(interaction):
-                    await self.lock_training_callback(interaction, ctx.guild.id)
+        select.callback = select_callback
 
-                lock_button.callback = lock_training_callback
-
-                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True, persistent=True)
-                view.add_item(end_button)
-
-                async def end_training_callback(interaction):
-                    await self.end_training_callback(interaction, ctx.guild.id)
-
-                end_button.callback = end_training_callback
-
-                msg = await channel.send(f"{session_ping}", embed=embed, view=view)
-                self.training_start_times[ctx.guild.id] = (selected_time, msg.id)
-                await ctx.send(f"{emoji} | Training has been initialized!")
-            else:
-                await ctx.send("The specified channel could not be found.")
-
-        time_select.callback = time_callback
         view = discord.ui.View()
-        view.add_item(time_select)
+        view.add_item(select)
+        await ctx.send("Select a training time:", view=view)
 
-        await ctx.send("Please select the training time:", view=view)
+    async def send_training_message(self, ctx, selected_time):
+        training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
+        session_ping = f"<@&{role_id}>"
+        host_mention = ctx.author.mention
+        start_time_unix = int(datetime.now(timezone.utc).timestamp())
 
-    async def start_training_callback(self, interaction, guild_id):
-        await interaction.response.defer()
-    
-        if guild_id not in self.training_start_times:
-            await interaction.followup.send("No active training found for this server.", ephemeral=True)
-            return
-    
-        training_channel_id = self.training_channel_ids.get(guild_id)
-        if training_channel_id is None:
-            await interaction.followup.send("No training channel set.", ephemeral=True)
-            return
-    
+        embed = discord.Embed(
+            title="Training Session",
+            description=f"A training session is scheduled at **{selected_time}**. Join us!",
+            color=0x00FF00
+        )
+        embed.add_field(name="Host", value=host_mention, inline=False)
+        embed.add_field(name="Session Status", value=f"Scheduled <t:{start_time_unix}:R>", inline=False)
+
         channel = self.bot.get_channel(training_channel_id)
-        if not channel:
-            await interaction.followup.send("The training channel could not be found.", ephemeral=True)
-            return
-    
-        try:
-            msg = await channel.fetch_message(self.training_start_times[guild_id][1])
-            embed = msg.embeds[0]
-            embed.set_field_at(1, name="Session Status", value="Training in progress", inline=False)
-    
-            # Update button states after training starts
-            view = discord.ui.View()
-            #start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, persistent=True)
-            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, persistent=True)
-            #view.add_item(start_button)
-            view.add_item(lock_button)
-            view.add_item(end_button)
-    
-            await msg.edit(embed=embed, view=view)
-            await interaction.followup.send("Training has started!", ephemeral=True)
-        except Exception as e:
-            await self.send_error_log(f"Error starting training: {str(e)}", interaction, "Start Training Error")
-            await interaction.followup.send("An error occurred while starting the training.", ephemeral=True)
+        if channel:
+            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.primary)
+            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
+            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
 
-
-    async def lock_training_callback(self, interaction, guild_id):
-        try:
-            # Acknowledge the interaction to avoid timeout
-            await interaction.response.defer()
-    
-            # Check if there is an active training session
-            if guild_id not in self.training_start_times:
-                await interaction.followup.send("No active training found for this server.", ephemeral=True)
-                return
-    
-            training_channel_id = self.training_channel_ids.get(guild_id)
-            if training_channel_id is None:
-                await interaction.followup.send("No training channel set.", ephemeral=True)
-                return
-    
-            channel = self.bot.get_channel(training_channel_id)
-            if not channel:
-                await interaction.followup.send("The training channel could not be found.", ephemeral=True)
-                return
-    
-            # Fetch the message to be edited
-            try:
-                msg_id = self.training_start_times[guild_id][1]
-                msg = await channel.fetch_message(msg_id)
-            except discord.NotFound:
-                await interaction.followup.send("Training message not found.", ephemeral=True)
-                return
-    
-            # Modify the embed and view
-            embed = msg.embeds[0]
-            embed.set_field_at(1, name="Session Status", value="Training session locked", inline=False)
-            embed.color = 0xED4245
-    
-            # Disable the buttons
-            view = discord.ui.View()
-            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True, persistent=True)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True, persistent=True)
-            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, persistent=True)
+            view = discord.ui.View(timeout=10800)  # 3 hours timeout
             view.add_item(start_button)
             view.add_item(lock_button)
             view.add_item(end_button)
-    
-            # Edit the message with the new embed and view
-            await msg.edit(embed=embed, view=view)
-            await interaction.followup.send("Training has been locked.", ephemeral=True)
-    
-        except Exception as e:
-            await self.send_error_log(f"Error locking training: {str(e)}", interaction, "Lock Training Error")
-            await interaction.followup.send("An error occurred while locking the training.", ephemeral=True)
-    
 
+            msg = await channel.send(f"{session_ping}", embed=embed, view=view)
 
+            # Button callbacks
+            async def start_callback(interaction: discord.Interaction):
+                start_button.disabled = True
+                end_button.disabled = False
+                lock_button.disabled = False
 
-    async def end_training_callback(self, interaction, guild_id):
-        try:
-            await interaction.response.defer()
-    
-            # Check if there is an active training session
-            if guild_id not in self.training_start_times:
-                await interaction.followup.send("No active training found for this server.", ephemeral=True)
-                return
-    
-            training_channel_id = self.training_channel_ids.get(guild_id)
-            if training_channel_id is None:
-                await interaction.followup.send("No training channel set.", ephemeral=True)
-                return
-    
-            channel = self.bot.get_channel(training_channel_id)
-            if not channel:
-                await interaction.followup.send("The training channel could not be found.", ephemeral=True)
-                return
-    
-            # Fetch the message to be edited
-            try:
-                msg_id = self.training_start_times[guild_id][1]
-                msg = await channel.fetch_message(msg_id)
-            except discord.NotFound:
-                await interaction.followup.send("Training message not found.", ephemeral=True)
-                return
-    
-            # Modify the embed and view
-            embed = msg.embeds[0]
-            embed.set_field_at(1, name="Session Status", value="Training session ended", inline=False)
-            embed.color = 0xED4245
-    
-            # Disable all buttons
-            view = discord.ui.View()
-            start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True, persistent=True)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True, persistent=True)
-            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True, persistent=True)
-            view.add_item(start_button)
-            view.add_item(lock_button)
-            view.add_item(end_button)
-    
-            # Edit the message with the new embed and view
-            await msg.edit(embed=embed, view=view)
-            await interaction.followup.send("Training has ended.", ephemeral=True)
-    
-        except Exception as e:
-            await self.send_error_log(f"Error ending training: {str(e)}", interaction, "End Training Error")
-            await interaction.followup.send("An error occurred while ending the training.", ephemeral=True)
+                embed.description += "\n**Training has started!**"
+                await msg.edit(embed=embed, view=view)
 
+            async def lock_callback(interaction: discord.Interaction):
+                lock_button.disabled = True
+                embed.description += "\n**Session Status:** Locked"
+                await msg.edit(embed=embed, view=view)
+
+            async def end_callback(interaction: discord.Interaction):
+                embed.title = "Training Ended"
+                embed.description += "\nThe training session has ended. Thank you for participating!"
+                await msg.edit(embed=embed, view=None)
+
+            start_button.callback = start_callback
+            lock_button.callback = lock_callback
+            end_button.callback = end_callback
+
+            await ctx.send("Training session scheduled!")
+        else:
+            await ctx.send("The specified channel could not be found.")
 
     @commands.command()
     @is_admin_user()
@@ -277,19 +162,21 @@ class TrainingManager(commands.Cog):
     @commands.command()
     @is_admin_user()
     async def trainingconfig(self, ctx):
-        if ctx.channel.id != 836283712193953882:  # Ensure the command is used in the correct channel
+        # Restrict command usage to specific channel
+        if ctx.channel.id != 836283712193953882:
             await ctx.send("Wrong channel buddy")
             return
 
         config_info = f"""```yaml
-        Training Start Times: {self.training_start_times}
-        Training Channel IDs: {self.training_channel_ids}
-        Training Mention Roles: {self.training_mention_roles}
-        Allowed Roles: {ALLOWED_ROLES}
-        Admin Users: {ADMIN_USERS}
-        ```"""
-
+    Training Start Times: {self.training_start_times}
+    Training Channel IDs: {self.training_channel_ids}
+    Training Mention Roles: {self.training_mention_roles}
+    Allowed Roles: {ALLOWED_ROLES}
+    Admin Users: {ADMIN_USERS}
+    ```"""
+    
         await ctx.send(config_info)
 
+# Async function to set up the cog
 async def setup(bot):
     await bot.add_cog(TrainingManager(bot))
