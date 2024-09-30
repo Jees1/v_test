@@ -73,6 +73,9 @@ class TrainingManager(commands.Cog):
             cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.danger)
 
             async def confirm_callback(interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("You are not authorized to confirm this action.", ephemeral=True)
+                    return
                 await interaction.response.send_message("Training message will be sent!", ephemeral=True)
                 await self.send_training_message(ctx, selected_time)
                 confirm_button.disabled = True
@@ -81,6 +84,9 @@ class TrainingManager(commands.Cog):
                 confirm_view.stop()  # Stop the view
 
             async def cancel_callback(interaction):
+                if interaction.user != ctx.author:
+                    await interaction.response.send_message("You are not authorized to cancel this action.", ephemeral=True)
+                    return
                 await interaction.response.send_message("Training command cancelled.", ephemeral=True)
                 confirm_button.disabled = True
                 cancel_button.disabled = True
