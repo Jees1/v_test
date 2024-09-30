@@ -191,7 +191,7 @@ class TrainingManager(commands.Cog):
         else:
             embed.set_footer(text=f"Ended by: {name} | {embed.footer.text}")
         
-        embed.description = f"The training session hosted by {mention} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
+        embed.description = f"The training session hosted by {name} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
         embed.clear_fields()
         embed.color = 0xF04747
         await msg.edit(embed=embed, view=None)
