@@ -60,11 +60,11 @@ class TrainingManager(commands.Cog):
 
             selected_time = select.values[0]
             await interaction.response.defer()  # Acknowledge the interaction
-
+            select.disabled = True
             confirm_embed = discord.Embed(
                 title="Confirm Training Time",
                 description=f"Would you like to post the training message for **{selected_time}**?",
-                color=0x00FF00
+                color=0x57F287
             )
             confirm_view = discord.ui.View(timeout=60)  # Timeout after 60 seconds
             confirm_button = discord.ui.Button(label="Confirm", style=discord.ButtonStyle.success)
@@ -118,7 +118,7 @@ class TrainingManager(commands.Cog):
         embed = discord.Embed(
             title="Training Session",
             description=f"A training is being hosted at **{selected_time}**! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
-            color=0x00FF00
+            color=0x57F287
         )
         embed.add_field(name="Host", value=host_mention, inline=False)
         embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
