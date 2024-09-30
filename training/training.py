@@ -81,7 +81,7 @@ class TrainingManager(commands.Cog):
                 confirm_button.disabled = True
                 cancel_button.disabled = True
                 await interaction.message.edit(view=confirm_view)  # Update message to disable buttons
-                confirm_view.stop()  # Stop the view
+                # confirm_view.stop()  # Stop the view
 
             async def cancel_callback(interaction):
                 if interaction.user != ctx.author:
@@ -91,7 +91,7 @@ class TrainingManager(commands.Cog):
                 confirm_button.disabled = True
                 cancel_button.disabled = True
                 await interaction.message.edit(view=confirm_view)  # Update message to disable buttons
-                confirm_view.stop()  # Stop the view
+                # confirm_view.stop()  # Stop the view
 
             confirm_button.callback = confirm_callback
             cancel_button.callback = cancel_callback
