@@ -73,14 +73,14 @@ class TrainingManager(commands.Cog):
                 await self.send_training_message(ctx, selected_time)
                 confirm_button.disabled = True
                 cancel_button.disabled = True
-                await ctx.send(embed=confirm_embed, view=confirm_view)  # Update message to disable buttons
+                await interaction.message.edit(view=confirm_view)  # Update message to disable buttons
                 confirm_view.stop()  # Stop the view
 
             async def cancel_callback(interaction):
                 await interaction.response.send_message("Training command cancelled.", ephemeral=True)
                 confirm_button.disabled = True
                 cancel_button.disabled = True
-                await ctx.send(embed=confirm_embed, view=confirm_view)  # Update message to disable buttons
+                await interaction.message.edit(view=confirm_view)  # Update message to disable buttons
                 confirm_view.stop()  # Stop the view
 
             confirm_button.callback = confirm_callback
@@ -117,7 +117,7 @@ class TrainingManager(commands.Cog):
         channel = self.bot.get_channel(training_channel_id)
         if channel:
             start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.primary)
-            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
+            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
             end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
 
             view = discord.ui.View(timeout=10800)  # 3 hours timeout
