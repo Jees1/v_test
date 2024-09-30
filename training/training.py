@@ -194,12 +194,15 @@ class TrainingManager(commands.Cog):
             "3 PM EST / 8 PM BST": now.replace(hour=15, minute=0, second=0, microsecond=0),
             "8 PM EST / 1 AM BST": now.replace(hour=20, minute=0, second=0, microsecond=0),
         }
-        
-        # Schedule for tomorrow if the selected time is in the past
-        if now > time_mapping[selected_time]:
-            time_mapping[selected_time] += timedelta(days=1)
+    
+        # Check if the selected time is in the past for today
+        selected_time_dt = time_mapping[selected_time]
+        if now > selected_time_dt:
+            # If the selected time is already passed today, set it for tomorrow
+            selected_time_dt += timedelta(days=1)
+    
+        return int(selected_time_dt.timestamp())
 
-        return int(time_mapping[selected_time].timestamp())
 
     async def end_training(self, msg, embed, name, automatic=False):
         delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600  # 600 = 10 mins
