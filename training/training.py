@@ -57,7 +57,7 @@ class TrainingManager(commands.Cog):
 
         async def select_callback(interaction):
             selected_time = select.values[0]
-            await interaction.response.defer()
+            await interaction.response.defer()  # Acknowledge the interaction
 
             confirm_embed = discord.Embed(
                 title="Confirm Training Time",
@@ -69,11 +69,11 @@ class TrainingManager(commands.Cog):
             cancel_button = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.danger)
 
             async def confirm_callback(interaction):
+                await interaction.response.send_message("Training message will be sent!", ephemeral=True)
                 await self.send_training_message(ctx, selected_time)
-                await interaction.followup.send("Training message sent!", ephemeral=True)
 
             async def cancel_callback(interaction):
-                await interaction.followup.send("Training command cancelled.", ephemeral=True)
+                await interaction.response.send_message("Training command cancelled.", ephemeral=True)
 
             confirm_button.callback = confirm_callback
             cancel_button.callback = cancel_callback
@@ -123,17 +123,20 @@ class TrainingManager(commands.Cog):
                 end_button.disabled = False
                 lock_button.disabled = False
                 await msg.edit(embed=embed, view=view)
+                await interaction.response.defer()  # Acknowledge the interaction
 
             async def lock_callback(interaction: discord.Interaction):
                 embed.title = "🔒 | Training Locked"
                 embed.set_field_at(1, name="Session Status", value="Locked")  # Update session status
                 lock_button.disabled = True
                 await msg.edit(embed=embed, view=view)
+                await interaction.response.defer()  # Acknowledge the interaction
 
             async def end_callback(interaction: discord.Interaction):
                 embed.title = "Training Ended"
                 embed.set_field_at(1, name="Session Status", value="The training session has ended. Thank you for participating!")  # Update session status
                 await msg.edit(embed=embed, view=None)
+                await interaction.response.defer()  # Acknowledge the interaction
 
             start_button.callback = start_callback
             lock_button.callback = lock_callback
