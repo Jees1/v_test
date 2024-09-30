@@ -45,7 +45,6 @@ class TrainingManager(commands.Cog):
     @commands.command()
     @is_allowed_role()
     async def training(self, ctx):
-        # Step 2: Ask for time selection
         time_options = [
             "12 AM EST / 5 AM BST",
             "5 AM EST / 10 AM BST",
@@ -54,14 +53,12 @@ class TrainingManager(commands.Cog):
             "8 PM EST / 1 AM BST"
         ]
 
-        # Create a dropdown menu for time selection
         select = discord.ui.Select(placeholder="Select a time...", options=[discord.SelectOption(label=time) for time in time_options])
 
         async def select_callback(interaction):
             selected_time = select.values[0]
             await interaction.response.defer()
 
-            # Step 3: Confirm time selection
             confirm_embed = discord.Embed(
                 title="Confirm Training Time",
                 description=f"Would you like to post the training message for **{selected_time}**?",
@@ -73,10 +70,10 @@ class TrainingManager(commands.Cog):
 
             async def confirm_callback(interaction):
                 await self.send_training_message(ctx, selected_time)
-                await interaction.response.send_message("Training message sent!", ephemeral=True)
+                await interaction.followup.send("Training message sent!", ephemeral=True)
 
             async def cancel_callback(interaction):
-                await interaction.response.send_message("Training command cancelled.", ephemeral=True)
+                await interaction.followup.send("Training command cancelled.", ephemeral=True)
 
             confirm_button.callback = confirm_callback
             cancel_button.callback = cancel_callback
@@ -120,23 +117,22 @@ class TrainingManager(commands.Cog):
 
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
 
-            # Button callbacks
             async def start_callback(interaction: discord.Interaction):
+                embed.set_field_at(1, name="Session Status", value="Training has started!")  # Update session status
                 start_button.disabled = True
                 end_button.disabled = False
                 lock_button.disabled = False
-
-                embed.description += "\n**Training has started!**"
                 await msg.edit(embed=embed, view=view)
 
             async def lock_callback(interaction: discord.Interaction):
+                embed.title = "🔒 | Training Locked"
+                embed.set_field_at(1, name="Session Status", value="Locked")  # Update session status
                 lock_button.disabled = True
-                embed.description += "\n**Session Status:** Locked"
                 await msg.edit(embed=embed, view=view)
 
             async def end_callback(interaction: discord.Interaction):
                 embed.title = "Training Ended"
-                embed.description += "\nThe training session has ended. Thank you for participating!"
+                embed.set_field_at(1, name="Session Status", value="The training session has ended. Thank you for participating!")  # Update session status
                 await msg.edit(embed=embed, view=None)
 
             start_button.callback = start_callback
@@ -162,7 +158,6 @@ class TrainingManager(commands.Cog):
     @commands.command()
     @is_admin_user()
     async def trainingconfig(self, ctx):
-        # Restrict command usage to specific channel
         if ctx.channel.id != 836283712193953882:
             await ctx.send("Wrong channel buddy")
             return
