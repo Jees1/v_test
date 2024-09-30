@@ -108,10 +108,11 @@ class TrainingManager(commands.Cog):
 
         embed = discord.Embed(
             title="Training Session",
-            description=f"A training session is scheduled at **{selected_time}**. Join us!",
+            description=f"A training is being hosted at **{selected_time}! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
             color=0x00FF00
         )
         embed.add_field(name="Host", value=host_mention, inline=False)
+        embed.add_field(name="Scheduled Time", value=selected_time, inline=False)
         embed.add_field(name="Session Status", value=f"Scheduled <t:{start_time_unix}:R>", inline=False)
 
         channel = self.bot.get_channel(training_channel_id)
@@ -128,7 +129,8 @@ class TrainingManager(commands.Cog):
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
 
             async def start_callback(interaction: discord.Interaction):
-                embed.set_field_at(1, name="Session Status", value="Training has started!")  # Update session status
+                start_time_unix = int(datetime.now(timezone.utc).timestamp())
+                embed.set_field_at(1, name="Session Status", value=f"Started <t:{start_time_unix}:R>")  # Update session status
                 start_button.disabled = True
                 end_button.disabled = False
                 lock_button.disabled = False
