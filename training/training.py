@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import asyncio
 
 from core import checks
@@ -35,8 +35,7 @@ class TrainingManager(commands.Cog):
         async def predicate(ctx):
             return ctx.author.id in ADMIN_USERS
         return commands.check(predicate)
-    
-    
+
     @commands.Cog.listener()
     async def on_ready(self):
         print(f'Logged in as {self.bot.user}!')
@@ -114,8 +113,9 @@ class TrainingManager(commands.Cog):
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
 
+        # Convert selected_time to Unix time
         unix_time = self.get_unix_time_from_selected_time(selected_time)
-        
+
         embed = discord.Embed(
             title="Training Session",
             description=f"A training is being hosted at **{selected_time}**! Join the Training Center for a possible promotion. Trainees up to Junior Staff may attend to get promotion, while Senior Staff and above may assist.",
@@ -176,7 +176,6 @@ class TrainingManager(commands.Cog):
                 await self.end_training(msg, embed, ctx.author.name, automatic=False)
                 await interaction.response.defer()  # Acknowledge the interaction
                 
-
             start_button.callback = start_callback
             lock_button.callback = lock_callback
             end_button.callback = end_callback
@@ -185,6 +184,22 @@ class TrainingManager(commands.Cog):
             await ctx.send("Training session scheduled!")
         else:
             await ctx.send("The specified channel could not be found.")
+
+    def get_unix_time_from_selected_time(self, selected_time):
+        now = datetime.now(timezone.utc)
+        time_mapping = {
+            "12 AM EST / 5 AM BST": now.replace(hour=0, minute=0, second=0, microsecond=0),
+            "5 AM EST / 10 AM BST": now.replace(hour=5, minute=0, second=0, microsecond=0),
+            "10 AM EST / 3 PM BST": now.replace(hour=10, minute=0, second=0, microsecond=0),
+            "3 PM EST / 8 PM BST": now.replace(hour=15, minute=0, second=0, microsecond=0),
+            "8 PM EST / 1 AM BST": now.replace(hour=20, minute=0, second=0, microsecond=0),
+        }
+        
+        # Schedule for tomorrow if the selected time is in the past
+        if now > time_mapping[selected_time]:
+            time_mapping[selected_time] += timedelta(days=1)
+
+        return int(time_mapping[selected_time].timestamp())
 
     async def end_training(self, msg, embed, name, automatic=False):
         delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600  # 600 = 10 mins
@@ -200,25 +215,6 @@ class TrainingManager(commands.Cog):
         await msg.edit(embed=embed, view=None)
         await asyncio.sleep(600)
         await msg.delete()
-
-    def get_unix_time_from_selected_time(self, selected_time):
-        # Example implementation, adjust as needed
-        now = datetime.now(timezone.utc)
-        # Map time options to actual times
-        time_mapping = {
-            "12 AM EST / 5 AM BST": now.replace(hour=0, minute=0, second=0, microsecond=0),
-            "5 AM EST / 10 AM BST": now.replace(hour=5, minute=0, second=0, microsecond=0),
-            "10 AM EST / 3 PM BST": now.replace(hour=10, minute=0, second=0, microsecond=0),
-            "3 PM EST / 8 PM BST": now.replace(hour=15, minute=0, second=0, microsecond=0),
-            "8 PM EST / 1 AM BST": now.replace(hour=20, minute=0, second=0, microsecond=0),
-        }
-        
-        # Assuming you want to schedule for today or tomorrow depending on the current time
-        if now > time_mapping[selected_time]:
-            # If the selected time is already passed today, set it for tomorrow
-            time_mapping[selected_time] += timedelta(days=1)
-    
-        return int(time_mapping[selected_time].timestamp())
 
     @commands.command()
     @is_admin_user()
