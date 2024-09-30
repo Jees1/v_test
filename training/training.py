@@ -59,6 +59,7 @@ class TrainingManager(commands.Cog):
         )
 
         async def time_callback(interaction):
+            ctx.send(f"Selected Time: {time_select.values[0]}")
             await interaction.response.defer()
             selected_time = time_select.values[0]
             self.training_start_times[ctx.guild.id] = (selected_time, datetime.now(timezone.utc))
@@ -115,7 +116,10 @@ class TrainingManager(commands.Cog):
                 await ctx.send("The specified channel could not be found.")
 
         time_select.callback = time_callback
-        await ctx.send("Please select the training time:", view=discord.ui.View().add_item(time_select))
+        view = discord.ui.View()
+        view.add_item(time_select)
+
+        await ctx.send("Please select the training time:", view=view)
 
     async def start_training_callback(self, interaction, guild_id):
         await interaction.response.defer()
