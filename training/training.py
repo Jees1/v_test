@@ -115,7 +115,7 @@ class TrainingManager(commands.Cog):
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
 
-        # Convert selected_time to Unix time
+        
 
         embed = discord.Embed(
             title="Training Session",
@@ -185,14 +185,6 @@ class TrainingManager(commands.Cog):
             await ctx.send("Training session scheduled!")
         else:
             await ctx.send("The specified channel could not be found.")
-        selected_time_dt = time_mapping[selected_time]  # This is in local time
-        selected_time_dt = selected_time_dt + current_offset  # Convert to UTC
-
-        # Check if the selected time is in the past for today
-        if now > selected_time_dt:
-            selected_time_dt += timedelta(days=1)  # Set for tomorrow if already passed
-
-        return int(selected_time_dt.timestamp())
 
     
     async def end_training(self, msg, embed, name, automatic=False):
