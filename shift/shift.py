@@ -84,7 +84,7 @@ class ShiftManager(commands.Cog):
             button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
     
             # Custom view with a timeout of 3 hours (10800 seconds)
-            view = discord.ui.View(timeout=10800)  # 3 hours
+            view = discord.ui.View(timeout=10)  # 3 hours
             view.add_item(button)
     
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
