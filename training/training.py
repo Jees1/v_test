@@ -92,7 +92,7 @@ class TrainingManager(commands.Cog):
 
                 start_button.callback = start_training_callback
 
-                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
+                lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
                 view.add_item(lock_button)
 
                 async def lock_training_callback(interaction):
@@ -100,7 +100,7 @@ class TrainingManager(commands.Cog):
 
                 lock_button.callback = lock_training_callback
 
-                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+                end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
                 view.add_item(end_button)
 
                 async def end_training_callback(interaction):
@@ -118,45 +118,80 @@ class TrainingManager(commands.Cog):
         await ctx.send("Please select the training time:", view=discord.ui.View().add_item(time_select))
 
     async def start_training_callback(self, interaction, guild_id):
-        await interaction.response.send_message("Training has started!", ephemeral=True)
-
-    async def lock_training_callback(self, interaction, guild_id):
         await interaction.response.defer()
+    
         if guild_id not in self.training_start_times:
             await interaction.followup.send("No active training found for this server.", ephemeral=True)
             return
-
+    
         training_channel_id = self.training_channel_ids.get(guild_id)
         if training_channel_id is None:
             await interaction.followup.send("No training channel set.", ephemeral=True)
             return
-
+    
         channel = self.bot.get_channel(training_channel_id)
         if not channel:
             await interaction.followup.send("The training channel could not be found.", ephemeral=True)
             return
-
+    
         try:
             msg = await channel.fetch_message(self.training_start_times[guild_id][1])
             embed = msg.embeds[0]
-            embed.title = "Training Locked"
-            embed.description = "The training session is now locked."
-            embed.color = 0xED4245
-
-            # Disable buttons after locking
+            embed.set_field_at(1, name="Session Status", value="Training in progress", inline=False)
+    
+            # Update button states after training starts
             view = discord.ui.View()
-            start_button = discord.ui.Button(label="Start Training", disabled=True)
-            lock_button = discord.ui.Button(label="Lock Training", disabled=True)
+            #start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success, disabled=True)
+            lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary)
             end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
-            view.add_item(start_button)
+            #view.add_item(start_button)
             view.add_item(lock_button)
             view.add_item(end_button)
+    
+            await msg.edit(embed=embed, view=view)
+            await interaction.followup.send("Training has started!", ephemeral=True)
+        except Exception as e:
+            await self.send_error_log(f"Error starting training: {str(e)}", interaction, "Start Training Error")
+            await interaction.followup.send("An error occurred while starting the training.", ephemeral=True)
 
+
+    async def lock_training_callback(self, interaction, guild_id):
+        await interaction.response.defer()
+    
+        if guild_id not in self.training_start_times:
+            await interaction.followup.send("No active training found for this server.", ephemeral=True)
+            return
+    
+        training_channel_id = self.training_channel_ids.get(guild_id)
+        if training_channel_id is None:
+            await interaction.followup.send("No training channel set.", ephemeral=True)
+            return
+    
+        channel = self.bot.get_channel(training_channel_id)
+        if not channel:
+            await interaction.followup.send("The training channel could not be found.", ephemeral=True)
+            return
+    
+        try:
+            msg = await channel.fetch_message(self.training_start_times[guild_id][1])
+            embed = msg.embeds[0]
+            embed.set_field_at(1, name="Session Status", value="Training session locked", inline=False)
+    
+            # Disable buttons after locking
+            view = discord.ui.View()
+            # start_button = discord.ui.Button(label="Start Training", disabled=True)
+            # lock_button = discord.ui.Button(label="Lock Training", disabled=True)
+            end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger)
+            # view.add_item(start_button)
+            # view.add_item(lock_button)
+            view.add_item(end_button)
+    
             await msg.edit(embed=embed, view=view)
             await interaction.followup.send("Training has been locked.", ephemeral=True)
         except Exception as e:
             await self.send_error_log(f"Error locking training: {str(e)}", interaction, "Lock Training Error")
             await interaction.followup.send("An error occurred while locking the training.", ephemeral=True)
+
 
     async def end_training_callback(self, interaction, guild_id):
         await interaction.response.defer()
@@ -182,12 +217,12 @@ class TrainingManager(commands.Cog):
             embed.color = 0xED4245
 
             # Disable all buttons at the end
-            view = discord.ui.View()
-            view.add_item(discord.ui.Button(label="Start Training", disabled=True))
-            view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
-            view.add_item(discord.ui.Button(label="End Training", disabled=True))
+            # view = discord.ui.View()
+            # view.add_item(discord.ui.Button(label="Start Training", disabled=True))
+            # view.add_item(discord.ui.Button(label="Lock Training", disabled=True))
+            # view.add_item(discord.ui.Button(label="End Training", disabled=True))
 
-            await msg.edit(embed=embed, view=view)
+            await msg.edit(embed=embed)#, view=view)
             await interaction.followup.send("Training has ended!", ephemeral=True)
         except Exception as e:
             await self.send_error_log(f"Error ending training: {str(e)}", interaction, "End Training Error")
