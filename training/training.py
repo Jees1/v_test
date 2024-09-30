@@ -189,14 +189,13 @@ class TrainingManager(commands.Cog):
         now = datetime.now(timezone.utc)  # Current time in UTC
         est_offset = timedelta(hours=-5)  # EST is UTC-5
         edt_offset = timedelta(hours=-4)  # EDT is UTC-4
-    
-        # Determine whether it's currently Standard Time or Daylight Saving Time
-        # For simplicity, we check if the date is in the summer months for EDT
-        if now.month >= 3 and now.month <= 11:  # From March to November
+
+        # Determine if currently in Daylight Saving Time (DST)
+        if now.month >= 3 and now.month <= 11:
             current_offset = edt_offset
         else:
             current_offset = est_offset
-    
+
         time_mapping = {
             "12 AM EST / 5 AM BST": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - current_offset,
             "5 AM EST / 10 AM BST": datetime.now().replace(hour=5, minute=0, second=0, microsecond=0) - current_offset,
@@ -204,20 +203,17 @@ class TrainingManager(commands.Cog):
             "3 PM EST / 8 PM BST": datetime.now().replace(hour=15, minute=0, second=0, microsecond=0) - current_offset,
             "8 PM EST / 1 AM BST": datetime.now().replace(hour=20, minute=0, second=0, microsecond=0) - current_offset,
         }
-    
+
         selected_time_dt = time_mapping[selected_time]  # This is in local time
-    
-        # Convert the selected time to UTC
-        selected_time_dt = selected_time_dt + current_offset
-    
+        selected_time_dt = selected_time_dt + current_offset  # Convert to UTC
+
         # Check if the selected time is in the past for today
         if now > selected_time_dt:
-            # If the selected time is already passed today, set it for tomorrow
-            selected_time_dt += timedelta(days=1)
-    
+            selected_time_dt += timedelta(days=1)  # Set for tomorrow if already passed
+
         return int(selected_time_dt.timestamp())
 
-
+    
     async def end_training(self, msg, embed, name, automatic=False):
         delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600  # 600 = 10 mins
         embed.title = "Training Ended"
