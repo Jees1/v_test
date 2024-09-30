@@ -91,7 +91,7 @@ class TrainingManager(commands.Cog):
 
             confirm_view.on_timeout = lambda: [setattr(confirm_button, 'disabled', True), setattr(cancel_button, 'disabled', True)]
 
-            await ctx.send(embed=confirm_embed, view=confirm_view)
+            await interaction.followup.send(embed=confirm_embed, view=confirm_view)
 
         select.callback = select_callback
 
