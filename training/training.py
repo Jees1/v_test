@@ -171,25 +171,33 @@ class TrainingManager(commands.Cog):
                 if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
                     await interaction.response.send_message("You do not have permission to end the training.", ephemeral=True)
                     return
-
-                delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600  # 600 = 10 mins
-                embed.title = "Training Ended"
-                embed.set_footer(text=f"Ended by: {ctx.author.name} | {embed.footer.text}")
-                embed.description = f"The training session hosted by {ctx.author.mention} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
-                embed.clear_fields()
-                embed.color = 0xF04747
-                await msg.edit(embed=embed, view=None)
-                await interaction.response.defer()  # Acknowledge the interaction
-                await asyncio.sleep(600)
-                await msg.delete()
+            
+                await self.end_training(msg, embed, ctx.author.name, automatic=False)
 
             start_button.callback = start_callback
             lock_button.callback = lock_callback
             end_button.callback = end_callback
 
+            view.on_timeout = lambda: asyncio.create_task(self.end_training(msg, embed, "The training session has timed out due to inactivity."))
+
             await ctx.send("Training session scheduled!")
         else:
             await ctx.send("The specified channel could not be found.")
+
+    async def end_training(self, msg, embed, name, automatic=False):
+        delete_time_unix = int(datetime.now(timezone.utc).timestamp()) + 600  # 600 = 10 mins
+        embed.title = "Training Ended"
+        if automatic:
+            embed.set_footer(text=f"Ended automatically | {embed.footer.text}")
+        else:
+            embed.set_footer(text=f"Ended by: {name} | {embed.footer.text}")
+        
+        embed.description = f"The training session hosted by {mention} has just ended. We appreciate your presence and look forward to seeing you at future trainings\n\nDeleting this message <t:{delete_time_unix}:R>"
+        embed.clear_fields()
+        embed.color = 0xF04747
+        await msg.edit(embed=embed, view=None)
+        await asyncio.sleep(600)
+        await msg.delete()
 
     @commands.command()
     @is_admin_user()
