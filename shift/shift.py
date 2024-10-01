@@ -92,9 +92,11 @@ class ShiftManager(commands.Cog):
 
             # Button callback for manually ending the shift
             async def button_callback(interaction: discord.Interaction):
+                await interaction.response.defer()
                 # Check if the user has an allowed role
                 if any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
                     await self.end_shift(ctx, msg, interaction.user)
+                    await interaction.response.send_message("Shift has ended.", ephemeral=True)
                 else:
                     await interaction.response.send_message("You do not have permission to end the shift.", ephemeral=True)
 
