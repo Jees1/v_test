@@ -119,8 +119,8 @@ class ShiftManager(commands.Cog):
 
     
     async def end_shift(self, ctx, msg, ended_by_user):
-        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
-        channel = self.bot.get_channel(shift_channel_id)
+        #shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
+        channel = self.bot.get_channel(channel_id)
         if not channel:
             print("The shift channel could not be found.")
             return
