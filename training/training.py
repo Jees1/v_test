@@ -238,7 +238,7 @@ class TrainingManager(commands.Cog):
         await ctx.send(config_info)
 
     @training.error
-    async def training_error(ctx, error):
+    async def training_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
             await ctx.send(f"{ctx.author.mention} please wait {int(error.retry_after)} seconds before using this command again.")
 
