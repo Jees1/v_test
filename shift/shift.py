@@ -21,6 +21,9 @@ ADMIN_USERS = [
 
 emoji = "<:cow:1012643349150314496>"
 
+channel_id = 780879678730666086
+ping_role_id = 695243187043696650
+
 class ShiftManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -61,8 +64,8 @@ class ShiftManager(commands.Cog):
     @is_allowed_role()
     async def shift(self, ctx):
         self.shift_start_times[ctx.guild.id] = datetime.now(timezone.utc)
-        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ctx.channel.id)
-        role_id = self.shift_mention_roles.get(ctx.guild.id, 695243187043696650)
+        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ping_role_id)
+        role_id = self.shift_mention_roles.get(ctx.guild.id, role_id)
         session_ping = f"<@&{role_id}>"
         host_mention = ctx.author.mention
         start_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp())
