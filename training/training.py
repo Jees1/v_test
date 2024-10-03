@@ -14,6 +14,13 @@ ALLOWED_ROLES = [
     686219247206137900
 ]
 
+MODIFY_ALLOWED = [
+    796317014209462332,
+    686257925815402660,
+    769203966004953118,
+    686219247206137900
+]
+
 ADMIN_USERS = [
     497582356064894997,
     349899849937846273
@@ -147,7 +154,7 @@ class TrainingManager(commands.Cog):
             msg = await channel.send(f"{session_ping}", embed=embed, view=view)
 
             async def start_callback(interaction: discord.Interaction):
-                if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
+                if not any(role.id in MODIFY_ALLOWED for role in interaction.user.roles) and interaction.user.id != ctx.author.id:
                     await interaction.response.send_message("You do not have permission to start the training.", ephemeral=True)
                     return
 
@@ -162,7 +169,7 @@ class TrainingManager(commands.Cog):
                 await interaction.response.defer()  # Acknowledge the interaction
 
             async def lock_callback(interaction: discord.Interaction):
-                if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
+                if not any(role.id in MODIFY_ALLOWED for role in interaction.user.roles) and interaction.user.id != ctx.author.id:
                     await interaction.response.send_message("You do not have permission to lock the training.", ephemeral=True)
                     return
 
@@ -176,7 +183,7 @@ class TrainingManager(commands.Cog):
                 await interaction.response.defer()  # Acknowledge the interaction
 
             async def end_callback(interaction: discord.Interaction):
-                if not any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
+                if not any(role.id in MODIFY_ALLOWED for role in interaction.user.roles) and interaction.user.id != ctx.author.id:
                     await interaction.response.send_message("You do not have permission to end the training.", ephemeral=True)
                     return
                 
