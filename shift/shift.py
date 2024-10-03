@@ -64,9 +64,9 @@ class ShiftManager(commands.Cog):
     @is_allowed_role()
     async def shift(self, ctx):
         self.shift_start_times[ctx.guild.id] = datetime.now(timezone.utc)
-        shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, ping_role_id)
-        role_id = self.shift_mention_roles.get(ctx.guild.id, role_id)
-        session_ping = f"<@&{role_id}>"
+        #shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, channel_id)
+        #role_id = self.shift_mention_roles.get(ctx.guild.id, ping_role_id)
+        session_ping = f"<@&{ping_role_id}>"
         host_mention = ctx.author.mention
         start_time_unix = int(self.shift_start_times[ctx.guild.id].timestamp())
 
@@ -80,7 +80,7 @@ class ShiftManager(commands.Cog):
         embed.add_field(name="Hotel Link", value="[Click here](https://www.roblox.com/games/4766198689/Work-at-a-Hotel-Vinns-Hotels)", inline=False)
         embed.set_footer(text=f"Vinns Sessions")
 
-        channel = self.bot.get_channel(shift_channel_id)
+        channel = self.bot.get_channel(channel_id)
         if channel:
             # Create a button for ending the shift manually
             button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
