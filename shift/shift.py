@@ -14,6 +14,13 @@ ALLOWED_ROLES = [
     686219247206137900
 ]
 
+END_ALLOWED = [
+    796317014209462332,
+    686257925815402660,
+    769203966004953118,
+    686219247206137900
+]
+
 ADMIN_USERS = [
     497582356064894997,
     349899849937846273
@@ -98,7 +105,7 @@ class ShiftManager(commands.Cog):
             async def button_callback(interaction: discord.Interaction):
                 await interaction.response.defer()
                 # Check if the user has an allowed role
-                if any(role.id in ALLOWED_ROLES for role in interaction.user.roles):
+                if interaction.user.id == ctx.author.id or any(role.id in END_ALLOWED for role in interaction.user.roles):
                     await self.end_shift(ctx, msg, interaction.user)
                     await interaction.response.send_message("Shift has ended.", ephemeral=True)
                 else:
