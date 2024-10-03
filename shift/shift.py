@@ -62,6 +62,7 @@ class ShiftManager(commands.Cog):
     @commands.command(aliases=['s'])
     @checks.has_permissions(PermissionLevel.REGULAR)
     @is_allowed_role()
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     async def shift(self, ctx):
         self.shift_start_times[ctx.guild.id] = datetime.now(timezone.utc)
         #shift_channel_id = self.shift_channel_ids.get(ctx.guild.id, channel_id)
@@ -200,6 +201,8 @@ class ShiftManager(commands.Cog):
             await ctx.send("You need to specify a role to mention. Usage: `-shift`.")
         elif isinstance(error, commands.MissingRole):
             await ctx.send("You don't have the required role to use this command.")
+        elif isinstance(error, commands.CommandOnCooldown):
+            await ctx.send(f"{ctx.author.mention}, please wait {int(error.retry_after)} seconds before using this command again.")
         else:
             await self.send_error_log(error, ctx, "shift_error")
             print(f"Error: {error}")
