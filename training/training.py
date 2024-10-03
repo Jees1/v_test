@@ -19,6 +19,11 @@ ADMIN_USERS = [
     349899849937846273
 ]
 
+emoji = "<:cow:1012643349150314496>"
+
+channel_id = 741830399956877312
+ping_role_id = 695243187043696650
+
 class TrainingManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -55,7 +60,7 @@ class TrainingManager(commands.Cog):
 
         async def select_callback(interaction):
             if interaction.user != ctx.author:
-                await interaction.response.send_message("You are not authorized to use this menu.", ephemeral=True)
+                await interaction.response.send_message(f"{emoji} | You are not authorized to use this menu.", ephemeral=True)
                 return
             
             select.disabled = True
@@ -76,7 +81,7 @@ class TrainingManager(commands.Cog):
                 if interaction.user != ctx.author:
                     await interaction.response.send_message("You are not authorized to confirm this action.", ephemeral=True)
                     return
-                await interaction.response.send_message("Training message will be sent!", ephemeral=True)
+                await interaction.response.send_message(f"{emoji} | Training message will be sent!", ephemeral=True)
                 await self.send_training_message(ctx, selected_time)
                 confirm_button.disabled = True
                 cancel_button.disabled = True
@@ -110,9 +115,9 @@ class TrainingManager(commands.Cog):
         await ctx.send("Select a training time:", view=view)
 
     async def send_training_message(self, ctx, selected_time):
-        training_channel_id = self.training_channel_ids.get(ctx.guild.id, ctx.channel.id)
-        role_id = self.training_mention_roles.get(ctx.guild.id, 695243187043696650)
-        session_ping = f"<@&{role_id}>"
+        #training_channel_id = self.training_channel_ids.get(ctx.guild.id, channel_id)
+        #role_id = self.training_mention_roles.get(ctx.guild.id, ping_role_id)
+        session_ping = f"<@&{ping_role_id}>"
         host_mention = ctx.author.mention
 
         
@@ -127,7 +132,7 @@ class TrainingManager(commands.Cog):
         embed.add_field(name="Session Status", value=f"Waiting for the host to start the training...", inline=False)
         embed.set_footer(text=f"Scheduled by: {ctx.author.name}")
 
-        channel = self.bot.get_channel(training_channel_id)
+        channel = self.bot.get_channel(channel_id)
         if channel:
             start_button = discord.ui.Button(label="Start Training", style=discord.ButtonStyle.success)
             lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
