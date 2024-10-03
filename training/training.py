@@ -47,6 +47,7 @@ class TrainingManager(commands.Cog):
 
     @commands.command(aliases=["train"])
     @is_allowed_role()
+    @commands.cooldown(1, 3600, commands.BucketType.user)
     async def training(self, ctx):
         time_options = [
             "12 AM EST / 5 AM BST",
@@ -235,6 +236,11 @@ class TrainingManager(commands.Cog):
     ```"""
         
         await ctx.send(config_info)
+
+    @training.error
+    async def training_error(ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            await ctx.send(f"{ctx.author.mention} please wait {int(error.retry_after)} seconds before using this command again.")
 
 # Async function to set up the cog
 async def setup(bot):
