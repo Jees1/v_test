@@ -186,9 +186,13 @@ class TrainingManager(commands.Cog):
                 if not any(role.id in MODIFY_ALLOWED for role in interaction.user.roles) and interaction.user.id != ctx.author.id:
                     await interaction.response.send_message("You do not have permission to end the training.", ephemeral=True)
                     return
-                
-                await self.end_training(msg, embed, ctx.author.name, automatic=False)
-                await interaction.response.defer()  # Acknowledge the interaction
+            
+                try:
+                    await self.end_training(msg, embed, ctx.author.name, automatic=False)
+                    await interaction.response.defer()  # Acknowledge the interaction
+                except discord.NotFound:
+                    print("The interaction was not found. It may have expired.")
+
                 
             start_button.callback = start_callback
             lock_button.callback = lock_callback
