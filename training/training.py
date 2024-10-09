@@ -54,6 +54,7 @@ class TrainingManager(commands.Cog):
 
     @commands.command(aliases=["train"])
     @is_allowed_role()
+    @checks.has_permissions(PermissionLevel.REGULAR)
     @commands.cooldown(1, 3600, commands.BucketType.user)
     async def training(self, ctx):
         time_options = [
@@ -220,18 +221,21 @@ class TrainingManager(commands.Cog):
         await msg.delete()
 
     @commands.command()
+    @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def trainingmention(self, ctx, role: discord.Role):
         self.training_mention_roles[ctx.guild.id] = role.id
         await ctx.send(f"Training mention role set to {role.mention}.")
 
     @commands.command()
+    @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def trainingchannel(self, ctx, channel: discord.TextChannel):
         self.training_channel_ids[ctx.guild.id] = channel.id
         await ctx.send(f"Training messages will now be sent in {channel.mention}.")
 
     @commands.command()
+    @checks.has_permissions(PermissionLevel.OWNER)
     @is_admin_user()
     async def trainingconfig(self, ctx):
         if ctx.channel.id != 836283712193953882:
