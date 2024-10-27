@@ -94,7 +94,7 @@ class ShiftManager(commands.Cog):
             button = discord.ui.Button(label="End Shift", style=discord.ButtonStyle.danger)
 
             # Create a view with a timeout of 3 hours (10800 seconds)
-            view = discord.ui.View(timeout=10800)  
+            view = discord.ui.View(timeout=108000)  
             view.add_item(button)
 
             # Send the shift announcement
