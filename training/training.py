@@ -147,7 +147,7 @@ class TrainingManager(commands.Cog):
             lock_button = discord.ui.Button(label="Lock Training", style=discord.ButtonStyle.secondary, disabled=True)
             end_button = discord.ui.Button(label="End Training", style=discord.ButtonStyle.danger, disabled=True)
 
-            view = discord.ui.View(timeout=10800)  # 3 hours timeout
+            view = discord.ui.View(timeout=108000)  # 3 hours timeout
             view.add_item(start_button)
             view.add_item(lock_button)
             view.add_item(end_button)
