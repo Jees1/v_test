@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ui import View, Select, Modal, InputText
+from discord.ui import View, Select, Modal, TextInput
 from core import checks
 from core.models import PermissionLevel
 import asyncio
@@ -24,7 +24,7 @@ class Suggest(commands.Cog):
         try:
             # Step 1: Ask for the suggestion text
             modal = Modal(title="Suggestion", custom_id="suggestion_modal")
-            modal.add_item(InputText(label="Please type your suggestion:", placeholder="Type your suggestion here..."))
+            modal.add_item(TextInput(label="Please type your suggestion:", placeholder="Type your suggestion here..."))
             
             # Wait for the modal response
             await ctx.send_modal(modal)
