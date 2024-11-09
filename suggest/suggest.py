@@ -48,8 +48,8 @@ class Suggest(commands.Cog):
 
                     @discord.ui.select(placeholder="Choose the type of your suggestion...", options=options)
                     async def select_callback(self, select, interaction: discord.Interaction):
-                        # The selected value is available on select.values
-                        selected_value = select.values[0]
+                        # Access select.values properly as a list of selected values
+                        selected_value = select.values[0]  # Get the first selected value from the select menu
                         
                         # Create embed for the suggestion
                         suggestEmbed = discord.Embed(description=suggestion, color=self.bot.main_color)
