@@ -39,8 +39,8 @@ class Suggest(commands.Cog):
 
             # Step 2: Ask for the channel selection using a dropdown menu
             class ChannelSelect(View):
-                def __init__(self, ctx, suggestion, *args, **kwargs):
-                    super().__init__(*args, **kwargs)
+                def __init__(self, ctx, suggestion):
+                    super().__init__()
                     self.ctx = ctx
                     self.suggestion = suggestion
 
@@ -53,6 +53,7 @@ class Suggest(commands.Cog):
                     ]
                 )
                 async def select_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
+                    # Check if the user interacting is the same user who invoked the command
                     if interaction.user != self.ctx.author:
                         await interaction.response.send_message("You cannot interact with this menu.", ephemeral=True)
                         return
@@ -62,7 +63,7 @@ class Suggest(commands.Cog):
                     hotelChannel = self.bot.get_channel(777656824098062385)
                     trainingChannel = self.bot.get_channel(686253519350923280)
 
-                    # Select the appropriate channel
+                    # Select the appropriate channel based on the user's choice
                     selected_channel = None
                     if select.values[0] == "discord":
                         selected_channel = discChannel
@@ -73,7 +74,7 @@ class Suggest(commands.Cog):
 
                     if selected_channel:
                         # Send the suggestion to the selected channel
-                        suggest_embed = discord.Embed(description=suggestion, color=self.bot.main_color)
+                        suggest_embed = discord.Embed(description=self.suggestion, color=self.bot.main_color)
                         suggest_embed.set_footer(text="Vinns Hotel Suggestions | -suggest")
                         suggest_embed.set_author(name=self.ctx.author, icon_url=self.ctx.author.avatar.url)
 
@@ -89,7 +90,7 @@ class Suggest(commands.Cog):
                         ):
                             await sugmsg.add_reaction(emoji)
 
-                        self.stop()  # Stop the menu interaction once the user selects a channel.
+                        self.stop()  # Stop the interaction after a selection
 
             # Send the dropdown menu for channel selection
             view = ChannelSelect(ctx, suggestion)
