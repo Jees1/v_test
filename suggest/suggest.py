@@ -1,13 +1,13 @@
 import discord
 from discord.ext import commands
-from discord.ui import View, Select
 from core import checks
 from core.models import PermissionLevel
 import asyncio
 
+
 class Suggest(commands.Cog):
     """
-    Lets you send a suggestion to a designated channel using an interactive sequence.
+    Let's you send a suggestion to a designated channel.
     """
 
     def __init__(self, bot):
@@ -17,89 +17,65 @@ class Suggest(commands.Cog):
     @commands.command()
     @checks.has_permissions(PermissionLevel.REGULAR)
     @commands.cooldown(1, 30, commands.BucketType.user)
-    async def suggest(self, ctx):
+    async def suggest(self, ctx, *, suggestion):
         """
-        Starts the suggestion process where the user inputs their suggestion and selects a channel.
+        Suggest something!
+
+        **Usage**:
+        -suggest You should add cars so guest can be driven to their rooms.
         """
         try:
-            # Step 1: Ask for the suggestion text via a message prompt
-            await ctx.send("Please type your suggestion. You have 60 seconds to respond.")
+            if ctx.guild.id == 686214712354144387:
+                discChannel = self.bot.get_channel(686858225743822883)
+                trainingChannel = self.bot.get_channel(686253519350923280)
+                hotelChannel = self.bot.get_channel(777656824098062385)
+                texta = """**React with the type of your suggestion:**
+  <:Discord:795240449103233024> | Discord Suggestion
+  🏨 | Hotel Suggestion
+  <:studio:639558945584840743> | Training Center Suggestion
+  ❌ | Cancel Command"""
+                embed1 = discord.Embed(description=texta, color=self.bot.main_color)
+                reactionmsg = await ctx.send(content=f"<@!{ctx.author.id}>", embed=embed1)
+                for emoji in ('<:Discord:795240449103233024>', '🏨', '<:studio:639558945584840743>', '❌'):
+                    await reactionmsg.add_reaction(emoji)
+                suggestEmbed = discord.Embed(description=suggestion, color=self.bot.main_color)
+                suggestEmbed.set_footer(text="Vinns Hotel Suggestions | -suggest")
+                suggestEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
+                embedTimeout = discord.Embed(description="❌ | You took too long! Command cancelled", color=15158332)
 
-            # Wait for the user to respond with their suggestion (message)
-            def check(m):
-                return m.author == ctx.author and m.channel == ctx.channel
+                def check(r, u):
+                    return u == ctx.author
 
-            try:
-                suggestion_msg = await self.bot.wait_for('message', check=check, timeout=60.0)
-                suggestion = suggestion_msg.content  # Get the suggestion text from the user's message
-                await suggestion_msg.delete()  # Delete the suggestion message to keep things clean
-            except asyncio.TimeoutError:
-                await ctx.send("❌ You took too long to respond. Command cancelled.")
-                return
+                try:
+                    reaction, user = await self.bot.wait_for("reaction_add", check=check, timeout=60)
+                except asyncio.TimeoutError:
+                    await reactionmsg.edit(embed=embedTimeout)
+                if str(reaction.emoji) == '<:Discord:795240449103233024>':
+                    sugmsg = await discChannel.send(content=f"<@!{user.id}>", embed=suggestEmbed)
+                    editEmbed = discord.Embed(description=f"✅ | Successfully sent your suggestion to <#{discChannel.id}>",
+                                              color=3066993)
+                    await reactionmsg.edit(embed=editEmbed)
+                if str(reaction.emoji) == '🏨':
+                    sugmsg = await hotelChannel.send(content=f"<@!{user.id}>", embed=suggestEmbed)
+                    editEmbed = discord.Embed(description=f"✅ | Successfully sent your suggestion to <#{hotelChannel.id}>",
+                                              color=3066993)
+                    await reactionmsg.edit(embed=editEmbed)
 
-            # Step 2: Ask for the channel selection using a dropdown menu
-            class ChannelSelect(View):
-                def __init__(self, ctx, suggestion, *args, **kwargs):
-                    super().__init__(*args, **kwargs)
-                    self.ctx = ctx
-                    self.suggestion = suggestion
-
-                @discord.ui.select(
-                    placeholder="Choose a channel to send your suggestion",
-                    options=[
-                        discord.SelectOption(label="Discord Suggestion", description="Send to the Discord suggestion channel", value="discord"),
-                        discord.SelectOption(label="Hotel Suggestion", description="Send to the hotel suggestion channel", value="hotel"),
-                        discord.SelectOption(label="Training Center Suggestion", description="Send to the training center channel", value="training"),
-                    ]
-                )
-                async def select_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
-                    # Fix: Compare the user interacting with the menu (not ctx.author directly)
-                    if interaction.user != self.ctx.author:
-                        await interaction.response.send_message("You cannot interact with this menu.", ephemeral=True)
-                        return
-
-                    # Define the channels
-                    discChannel = self.bot.get_channel(686858225743822883)
-                    hotelChannel = self.bot.get_channel(777656824098062385)
-                    trainingChannel = self.bot.get_channel(686253519350923280)
-
-                    # Select the appropriate channel based on the user's selection
-                    selected_channel = None
-                    if select.values[0] == "discord":
-                        selected_channel = discChannel
-                    elif select.values[0] == "hotel":
-                        selected_channel = hotelChannel
-                    elif select.values[0] == "training":
-                        selected_channel = trainingChannel
-
-                    if selected_channel:
-                        # Send the suggestion to the selected channel
-                        suggest_embed = discord.Embed(description=self.suggestion, color=self.bot.main_color)
-                        suggest_embed.set_footer(text="Vinns Hotel Suggestions | -suggest")
-                        suggest_embed.set_author(name=self.ctx.author, icon_url=self.ctx.author.avatar.url)
-
-                        sugmsg = await selected_channel.send(content=f"<@!{self.ctx.author.id}>", embed=suggest_embed)
-                        
-                        await interaction.response.send_message(f"✅ Successfully sent your suggestion to <#{selected_channel.id}>", ephemeral=True)
-                        
-                        # Add reaction options to the suggestion message for approval, neutral, disapproval
-                        for emoji in (
-                            '<:Approve:818120227387998258>', 
-                            '<:Neutral:818120929057046548>', 
-                            '<:Disapprove:818120194135425024>'
-                        ):
-                            await sugmsg.add_reaction(emoji)
-
-                        self.stop()  # Stop the menu interaction once the user selects a channel.
-
-            # Send the dropdown menu for channel selection
-            view = ChannelSelect(ctx, suggestion)
-            await ctx.send(content="Now, please select the channel to send your suggestion to:", view=view)
-
+                if str(reaction.emoji) == '<:studio:639558945584840743>':
+                    sugmsg = await trainingChannel.send(content=f"<@!{user.id}>", embed=suggestEmbed)
+                    editEmbed = discord.Embed(
+                        description=f"✅ | Successfully sent your suggestion to <#{trainingChannel.id}>", color=3066993)
+                    await reactionmsg.edit(embed=editEmbed)
+                if str(reaction.emoji) == '❌':
+                    editEmbed = discord.Embed(description="❌ | Cancelled command.", color=15158332)
+                    await reactionmsg.edit(embed=editEmbed)
+                await reactionmsg.clear_reactions()
+                for emoji in (
+                '<:Approve:818120227387998258>', '<:Neutral:818120929057046548>', '<:Disapprove:818120194135425024>'):
+                    await sugmsg.add_reaction(emoji)
         except discord.ext.commands.CommandOnCooldown:
-            await ctx.send("❌ You are on cooldown. Please try again later.")
-        except Exception as e:
-            await ctx.send(f"❌ An error occurred: {str(e)}")
+            print("cooldown")
+
 
 async def setup(bot):
     await bot.add_cog(Suggest(bot))
