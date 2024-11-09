@@ -1,10 +1,8 @@
 import discord
 from discord.ext import commands
-from discord.ui import Select, View
 from core import checks
 from core.models import PermissionLevel
 import asyncio
-
 
 class Suggest(commands.Cog):
     """
@@ -16,7 +14,7 @@ class Suggest(commands.Cog):
         self.coll = bot.plugin_db.get_partition(self)
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.OWNER)
+    @checks.has_permissions(PermissionLevel.REGULAR)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def suggest(self, ctx, *, suggestion):
         """
@@ -31,7 +29,7 @@ class Suggest(commands.Cog):
                 trainingChannel = self.bot.get_channel(686253519350923280)
                 hotelChannel = self.bot.get_channel(777656824098062385)
 
-                # Create a dropdown (select menu) with the suggestion categories
+                # Create a select menu with the different suggestion categories
                 options = [
                     discord.SelectOption(label="Discord Suggestion", emoji="<:Discord:795240449103233024>", value="discord"),
                     discord.SelectOption(label="Hotel Suggestion", emoji="🏨", value="hotel"),
@@ -39,55 +37,52 @@ class Suggest(commands.Cog):
                     discord.SelectOption(label="Cancel Command", emoji="❌", value="cancel")
                 ]
                 
-                select = Select(placeholder="Choose the type of your suggestion...", options=options)
+                select = discord.ui.Select(placeholder="Choose the type of your suggestion...", options=options)
 
-                # This View is responsible for handling the select menu interaction
-                class SuggestionView(View):
+                # View to handle the select menu
+                class SuggestionView(discord.ui.View):
                     def __init__(self, *args, **kwargs):
                         super().__init__(*args, **kwargs)
 
-                    # Properly handle the interaction when the user selects a value
+                    # Callback for when a user selects an option
                     @discord.ui.select(placeholder="Choose the type of your suggestion...", options=options)
-                    async def select_callback(self, select: Select, interaction: discord.Interaction):
-                        # Accessing select.values correctly
-                        selected_value = select.values[0]  # Get the first selected value from the select menu
+                    async def select_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
+                        # Ensure that the user who triggered the command is the one interacting with the select menu
+                        if interaction.user != ctx.author:
+                            await interaction.response.send_message("You are not authorized to use this menu.", ephemeral=True)
+                            return
                         
-                        # Create embed for the suggestion
+                        selected_value = select.values[0]  # Get the first selected value
+                        
+                        # Create the suggestion embed
                         suggestEmbed = discord.Embed(description=suggestion, color=self.bot.main_color)
                         suggestEmbed.set_footer(text="Vinns Hotel Suggestions | -suggest")
                         suggestEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
 
-                        # Send the suggestion based on the selected option
+                        # Send the suggestion to the appropriate channel based on the selection
                         if selected_value == "discord":
                             await discChannel.send(content=f"<@!{interaction.user.id}>", embed=suggestEmbed)
-                            await interaction.response.edit_message(content="✅ | Successfully sent your suggestion to <#{}>".format(discChannel.id))
+                            await interaction.response.edit_message(content=f"✅ | Successfully sent your suggestion to <#{discChannel.id}>", embed=None)
                         elif selected_value == "hotel":
                             await hotelChannel.send(content=f"<@!{interaction.user.id}>", embed=suggestEmbed)
-                            await interaction.response.edit_message(content="✅ | Successfully sent your suggestion to <#{}>".format(hotelChannel.id))
+                            await interaction.response.edit_message(content=f"✅ | Successfully sent your suggestion to <#{hotelChannel.id}>", embed=None)
                         elif selected_value == "training":
                             await trainingChannel.send(content=f"<@!{interaction.user.id}>", embed=suggestEmbed)
-                            await interaction.response.edit_message(content="✅ | Successfully sent your suggestion to <#{}>".format(trainingChannel.id))
+                            await interaction.response.edit_message(content=f"✅ | Successfully sent your suggestion to <#{trainingChannel.id}>", embed=None)
                         elif selected_value == "cancel":
-                            await interaction.response.edit_message(content="❌ | Cancelled command.", embed=None)
+                            await interaction.response.edit_message(content="❌ | Command cancelled.", embed=None)
 
-                        # Disable the select menu after a choice is made
+                        # Disable the select menu after interaction
                         select.disabled = True
                         await interaction.message.edit(view=self)
 
-                # Send the initial message with the select menu
-                embed = discord.Embed(
-                    description=f"**Select the type of your suggestion:**",
-                    color=self.bot.main_color
-                )
-                embed.set_footer(text="Vinns Hotel Suggestions | -suggest")
-                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
-
-                view = SuggestionView(timeout=60)  # View with a timeout of 60 seconds
-                await ctx.send(embed=embed, view=view)
+                # Create a view and add the select menu to it
+                view = SuggestionView(timeout=60)  # Set timeout to 60 seconds
+                await ctx.send("Please select the type of your suggestion:", view=view)
 
         except discord.ext.commands.CommandOnCooldown:
-            print("cooldown")
+            print("Cooldown triggered.")
 
-
+# Async function to set up the cog
 async def setup(bot):
     await bot.add_cog(Suggest(bot))
