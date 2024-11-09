@@ -16,7 +16,7 @@ class Suggest(commands.Cog):
         self.coll = bot.plugin_db.get_partition(self)
 
     @commands.command()
-    @checks.has_permissions(PermissionLevel.REGULAR)
+    @checks.has_permissions(PermissionLevel.OWNER)
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def suggest(self, ctx, *, suggestion):
         """
