@@ -193,5 +193,5 @@ class Reports(commands.Cog):
             print("cooldown")
 
 
-def setup(bot):
-    bot.add_cog(Reports(bot))
+async def setup(bot):
+    await bot.add_cog(Reports(bot))
