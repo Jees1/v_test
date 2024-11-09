@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ui import View, Select, Modal, TextInput
+from discord.ui import View, Select
 from core import checks
 from core.models import PermissionLevel
 import asyncio
@@ -22,18 +22,20 @@ class Suggest(commands.Cog):
         Starts the suggestion process where the user inputs their suggestion and selects a channel.
         """
         try:
-            # Step 1: Ask for the suggestion text
-            modal = Modal(title="Suggestion", custom_id="suggestion_modal")
-            modal.add_item(TextInput(label="Please type your suggestion:", placeholder="Type your suggestion here..."))
-            
-            # Wait for the modal response
-            await ctx.send_modal(modal)
+            # Step 1: Ask for the suggestion text via a message prompt
+            await ctx.send("Please type your suggestion. You have 60 seconds to respond.")
 
-            # Wait for the modal response asynchronously
-            interaction = await self.bot.wait_for('modal_submit', check=lambda inter: inter.user == ctx.author)
+            # Wait for the user to respond with their suggestion (message)
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
 
-            suggestion = interaction.data['components'][0]['value']  # The text the user entered
-            await interaction.response.send_message("Got your suggestion! Now, let's choose the channel.")
+            try:
+                suggestion_msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                suggestion = suggestion_msg.content  # Get the suggestion text from the user's message
+                await suggestion_msg.delete()  # Delete the suggestion message to keep things clean
+            except asyncio.TimeoutError:
+                await ctx.send("❌ You took too long to respond. Command cancelled.")
+                return
 
             # Step 2: Ask for the channel selection using a dropdown menu
             class ChannelSelect(View):
