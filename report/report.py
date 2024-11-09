@@ -122,7 +122,7 @@ class Reports(commands.Cog):
                 reportEmbed.add_field(name="Reason:", value=reason.content)
                 if proof.content:
                     reportEmbed.add_field(name="Proof:", value=proof.content)
-                reportEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+                reportEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
 
                 await staffChannel.send(content="---------------------------", embed=reportEmbed, files=my_files)
                 text = "✅ | The report has successfully been sent!"
@@ -180,7 +180,7 @@ class Reports(commands.Cog):
                 if proof.content:
                     reportEmbed.add_field(name="Proof:", value=proof.content)
                 reportEmbed.add_field(name="Reason:", value=reason.content)
-                reportEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+                reportEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
                 await guestChannel.send(content="---------------------------", embed=reportEmbed, files=my_files)
                 text = "✅ | The report has successfully been sent!"
                 await reactionmsg.edit(embed=discord.Embed(description=text, color=3066993))
