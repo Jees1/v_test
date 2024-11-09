@@ -46,9 +46,10 @@ class Suggest(commands.Cog):
                     def __init__(self, *args, **kwargs):
                         super().__init__(*args, **kwargs)
 
+                    # Properly handle the interaction when the user selects a value
                     @discord.ui.select(placeholder="Choose the type of your suggestion...", options=options)
-                    async def select_callback(self, select, interaction: discord.Interaction):
-                        # Access select.values properly as a list of selected values
+                    async def select_callback(self, select: Select, interaction: discord.Interaction):
+                        # Accessing select.values correctly
                         selected_value = select.values[0]  # Get the first selected value from the select menu
                         
                         # Create embed for the suggestion
@@ -56,6 +57,7 @@ class Suggest(commands.Cog):
                         suggestEmbed.set_footer(text="Vinns Hotel Suggestions | -suggest")
                         suggestEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
 
+                        # Send the suggestion based on the selected option
                         if selected_value == "discord":
                             await discChannel.send(content=f"<@!{interaction.user.id}>", embed=suggestEmbed)
                             await interaction.response.edit_message(content="✅ | Successfully sent your suggestion to <#{}>".format(discChannel.id))
