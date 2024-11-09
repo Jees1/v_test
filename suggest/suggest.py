@@ -48,23 +48,24 @@ class Suggest(commands.Cog):
 
                     @discord.ui.select(placeholder="Choose the type of your suggestion...", options=options)
                     async def select_callback(self, select, interaction: discord.Interaction):
-                        value = select.values[0]
+                        # The selected value is available on select.values
+                        selected_value = select.values[0]
                         
                         # Create embed for the suggestion
                         suggestEmbed = discord.Embed(description=suggestion, color=self.bot.main_color)
                         suggestEmbed.set_footer(text="Vinns Hotel Suggestions | -suggest")
                         suggestEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
 
-                        if value == "discord":
+                        if selected_value == "discord":
                             await discChannel.send(content=f"<@!{interaction.user.id}>", embed=suggestEmbed)
                             await interaction.response.edit_message(content="✅ | Successfully sent your suggestion to <#{}>".format(discChannel.id))
-                        elif value == "hotel":
+                        elif selected_value == "hotel":
                             await hotelChannel.send(content=f"<@!{interaction.user.id}>", embed=suggestEmbed)
                             await interaction.response.edit_message(content="✅ | Successfully sent your suggestion to <#{}>".format(hotelChannel.id))
-                        elif value == "training":
+                        elif selected_value == "training":
                             await trainingChannel.send(content=f"<@!{interaction.user.id}>", embed=suggestEmbed)
                             await interaction.response.edit_message(content="✅ | Successfully sent your suggestion to <#{}>".format(trainingChannel.id))
-                        elif value == "cancel":
+                        elif selected_value == "cancel":
                             await interaction.response.edit_message(content="❌ | Cancelled command.", embed=None)
 
                         # Disable the select menu after a choice is made
