@@ -101,7 +101,7 @@ class Reports(commands.Cog):
                     return await reactionmsg.edit(embed=embedTimeout)
                 await reason.delete()
 
-                text = "**Staff Report**\nPlease provide proof of this happening. You can upload a video/image or use a link to an image or video. The report will be sent right after. You have 10 minutes to reply.\n\n*Say 'cancel' to cancel the report.*"
+                text = "**Staff Report**\nPlease provide proof of this happening. You can upload a video/image or use a link to an image or video. You can attach multiple videos/images/links, but they must be in the same message. The report will be sent right after. You have 10 minutes to reply.\n\n*Say 'cancel' to cancel the report.*"
                 await reactionmsg.edit(embed=discord.Embed(description=text, color=self.bot.main_color))
 
                 try:
@@ -160,7 +160,7 @@ class Reports(commands.Cog):
                     return await reactionmsg.edit(embed=embedTimeout)
                 await reason.delete()
 
-                text = "**Guest Report**\nPlease provide proof of this happening. You can upload a video/image or use a link to an image or video. You can attach multiple images, but they must be in the same message. The report will be sent right after. You have 10 minutes to reply.\n\n*Say 'cancel' to cancel the report.*"
+                text = "**Guest Report**\nPlease provide proof of this happening. You can upload a video/image or use a link to an image or video. You can attach multiple videos/images/links, but they must be in the same message. The report will be sent right after. You have 10 minutes to reply.\n\n*Say 'cancel' to cancel the report.*"
                 await reactionmsg.edit(embed=discord.Embed(description=text, color=self.bot.main_color))
 
                 try:
