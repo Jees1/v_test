@@ -114,8 +114,58 @@ class Reports(commands.Cog):
 
             elif str(reaction.emoji) == '2️⃣':
                 await reactionmsg.clear_reactions()
-                # Similar flow for Guest Report here...
-                # You can repeat the same steps for '2️⃣' as for '1️⃣' for Guest Reports
+            
+                # Collect the report details for the Guest Report
+                username = await self.ask_for_input(ctx, reactionmsg, "**Guest Report**\nWhat is the username of the user you're reporting?", 120)
+                if username is None:
+                    return
+            
+                reason = await self.ask_for_input(ctx, reactionmsg, "**Guest Report**\nWhat is the reason for this report?", 120)
+                if reason is None:
+                    return
+            
+                # Proof upload loop for Guest Report
+                proofs = []
+                await reactionmsg.edit(embed=discord.Embed(description="**Guest Report**\nPlease provide proof of this happening. You can upload a video/image or use a link to an image or video. You can upload multiple files. React with ✅ when done. You have 10 minutes.", color=self.bot.main_color))
+            
+                def check_reaction(r, u):
+                    return u == ctx.author and r.message.id == reactionmsg.id and str(r.emoji) in ('✅', '❌')
+            
+                try:
+                    # Wait for a checkmark or cancel
+                    while True:
+                        message = await self.bot.wait_for('message', check=checkmsg, timeout=600)
+                        if cancel_check(message):
+                            return await self.cancel_report(reactionmsg)
+                        # Save proof files
+                        proofs.extend([await x.to_file() for x in message.attachments])
+                        await message.delete()
+                        
+                        # After a proof is sent, check for a reaction to confirm completion
+                        await reactionmsg.clear_reactions()
+                        await reactionmsg.add_reaction('✅')
+                        await reactionmsg.add_reaction('❌')
+                        
+                        reaction, user = await self.bot.wait_for('reaction_add', timeout=600.0, check=check_reaction)
+            
+                        if str(reaction.emoji) == '✅':
+                            break  # Done uploading proofs
+                        elif str(reaction.emoji) == '❌':
+                            return await self.cancel_report(reactionmsg)
+            
+                except asyncio.TimeoutError:
+                    return await reactionmsg.edit(embed=embedTimeout)
+            
+                # Send report with the collected details and proofs
+                reportEmbed = discord.Embed(title="New Guest Report", color=self.bot.main_color)
+                reportEmbed.add_field(name="Username:", value=username)
+                reportEmbed.add_field(name="Reason:", value=reason)
+                reportEmbed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
+                if proofs:
+                    await guestChannel.send(content="---------------------------", embed=reportEmbed, files=proofs)
+                    text = "✅ | The report has successfully been sent!"
+                    await reactionmsg.edit(embed=discord.Embed(description=text, color=3066993))
+
 
             elif str(reaction.emoji) == '❌':
                 await self.cancel_report(reactionmsg)
