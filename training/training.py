@@ -58,11 +58,11 @@ class TrainingManager(commands.Cog):
     @commands.cooldown(1, 3600, commands.BucketType.user)
     async def training(self, ctx):
         time_options = [
-            "12 AM EST / 5 AM GMT",
-            "5 AM EST / 10 AM GMT",
-            "10 AM EST / 3 PM GMT",
-            "3 PM EST / 8 PM GMT",
-            "8 PM EST / 1 AM GMT"
+            "4 AM EST / 9 AM GMT",
+            "9 AM EST / 2 PM GMT",
+            "2 PM EST / 7 PM GMT",
+            "7 PM EST / 12 AM GMT",
+            "11 PM EST / 4 AM GMT"
         ]
 
         select = discord.ui.Select(placeholder="Select a time...", options=[discord.SelectOption(label=time) for time in time_options])
